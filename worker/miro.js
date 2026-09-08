@@ -35,27 +35,49 @@ export function createMiroClient({ fetchImpl = fetch, accessToken, boardId }) {
     Authorization: `Bearer ${accessToken}`,
   };
 
+  async function listStickyItems() {
+    const items = [];
+    let cursor = null;
+
+    do {
+      const cursorParam = cursor ? `&cursor=${encodeURIComponent(cursor)}` : "";
+      const response = await fetchImpl(
+        `https://api.miro.com/v2/boards/${encodedBoardId}/items?type=sticky_note&limit=50${cursorParam}`,
+        {
+          method: "GET",
+          headers: authorizationHeaders,
+        },
+      );
+
+      if (response.status !== 200) {
+        return { ok: false, statusCode: response.status };
+      }
+
+      const data = await response.json().catch(() => null);
+      if (!Array.isArray(data?.data)) {
+        return { ok: false };
+      }
+
+      items.push(...data.data);
+      cursor = typeof data.cursor === "string" && data.cursor.length > 0 ? data.cursor : null;
+    } while (cursor);
+
+    return { ok: true, items };
+  }
+
   return {
     async createSticky({ text }) {
       try {
-        const listResponse = await fetchImpl(
-          `https://api.miro.com/v2/boards/${encodedBoardId}/items?type=sticky_note&limit=50`,
-          {
-            method: "GET",
-            headers: authorizationHeaders,
-          },
-        );
-
-        if (listResponse.status !== 200) {
-          return { ok: false, statusCode: listResponse.status, error: "miro_create_failed" };
+        const listed = await listStickyItems();
+        if (!listed.ok) {
+          return {
+            ok: false,
+            ...(listed.statusCode ? { statusCode: listed.statusCode } : {}),
+            error: "miro_create_failed",
+          };
         }
 
-        const listData = await listResponse.json().catch(() => null);
-        if (!Array.isArray(listData?.data)) {
-          return { ok: false, error: "miro_create_failed" };
-        }
-
-        const position = firstOpenGridPosition(listData.data);
+        const position = firstOpenGridPosition(listed.items);
         const response = await fetchImpl(
           `https://api.miro.com/v2/boards/${encodedBoardId}/sticky_notes`,
           {
