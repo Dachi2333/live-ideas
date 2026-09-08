@@ -6,6 +6,9 @@ on:
     branches:
       - feat/webapp-v0
 
+permissions:
+  contents: write
+
 jobs:
   test-and-build:
     runs-on: ubuntu-latest
@@ -16,12 +19,17 @@ jobs:
           node-version: 24
       - name: Install dependencies
         run: npm install --no-audit --no-fund
-      - name: Preserve generated lockfile
-        uses: actions/upload-artifact@v4
-        with:
-          name: package-lock
-          path: package-lock.json
-          if-no-files-found: error
+      - name: Commit generated lockfile on branch push
+        if: github.event_name == 'push'
+        run: |
+          if git diff --quiet -- package-lock.json && git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package-lock.json
+          git commit -m 'chore: lock Sites dependencies'
+          git push origin HEAD:feat/webapp-v0
       - name: Run tests
         run: npm test
       - name: Build ChatGPT Sites artifact
