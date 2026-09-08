@@ -21,3 +21,16 @@ test("shell declares standalone web-app metadata without a service worker", asyn
   assert.equal(manifest.display, "standalone");
   assert.doesNotMatch(app, /serviceWorker/);
 });
+
+test("capture shell stays fixed while the iOS visual viewport changes for the keyboard", async () => {
+  const css = await readFile(new URL("../../src/client/styles.css", import.meta.url), "utf8");
+  const app = await readFile(new URL("../../src/client/app.js", import.meta.url), "utf8");
+
+  assert.match(css, /html, body, #app\s*\{[^}]*overflow:\s*hidden/s);
+  assert.match(css, /\.app-shell\s*\{[^}]*position:\s*fixed[^}]*--app-viewport-height|\.app-shell\s*\{[^}]*height:\s*var\(--app-viewport-height/s);
+  assert.match(css, /\.capture-view\s*\{[^}]*overflow:\s*hidden/s);
+  assert.match(css, /\.fragments-view\s*\{[^}]*overflow-y:\s*auto/s);
+  assert.match(app, /window\.visualViewport/);
+  assert.match(app, /--app-viewport-height/);
+  assert.match(app, /--app-viewport-top/);
+});
