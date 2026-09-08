@@ -13,7 +13,14 @@ MIRO_ACCESS_TOKEN
 MIRO_BOARD_ID
 ```
 
-The token must be able to create Sticky Notes on that Board. The app does not need unrelated Miro data.
+The Miro app/token must have exactly these V0 scopes:
+
+```text
+boards:read
+boards:write
+```
+
+`boards:write` creates the Sticky Note. `boards:read` is used only on the fixed target Board to read existing Sticky positions so the server can choose the first open grid slot across devices. Live Lyrics does not read or analyze unrelated Board content.
 
 ## 2. Owner identity
 
