@@ -11,6 +11,8 @@ Record PASS / FAIL for each item.
 - [ ] Opening lands directly on Capture, not a marketing/setup page.
 - [ ] The text area becomes usable quickly enough for real capture.
 - [ ] Daily Capture controls are only `Fragments`, input, and `↗` plus minimal status feedback.
+- [ ] Swiping on the Capture page does not move/bounce the whole page.
+- [ ] Opening and closing the iOS keyboard keeps the Capture shell fixed to the visible viewport and keeps `↗` usable.
 
 ## B. Text integrity
 
@@ -60,6 +62,7 @@ Before sending a fragment:
 
 - [ ] Every successful capture creates exactly one Sticky on the fixed target Board.
 - [ ] Successive Stickies use the deterministic non-overlapping grid.
+- [ ] Send from desktop and then from iPhone: the second device reads current Board positions and uses the next open grid slot instead of overlapping the first device’s Sticky.
 - [ ] No destination picker appears during normal Capture.
 
 ## G. Secret boundary
