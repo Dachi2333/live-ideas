@@ -5,18 +5,15 @@ import { createRemoteClient } from "./remote.js";
 import { createCaptureViewModel } from "./view-model.js";
 import { renderFragments } from "./render.js";
 
-function syncVisualViewport() {
+function syncVisualViewportHeight() {
   const viewport = window.visualViewport;
   const height = viewport?.height ?? window.innerHeight;
-  const top = viewport?.offsetTop ?? 0;
   document.documentElement.style.setProperty("--app-viewport-height", `${height}px`);
-  document.documentElement.style.setProperty("--app-viewport-top", `${top}px`);
 }
 
-syncVisualViewport();
-window.visualViewport?.addEventListener("resize", syncVisualViewport);
-window.visualViewport?.addEventListener("scroll", syncVisualViewport);
-window.addEventListener("resize", syncVisualViewport);
+syncVisualViewportHeight();
+window.visualViewport?.addEventListener("resize", syncVisualViewportHeight);
+window.addEventListener("resize", syncVisualViewportHeight);
 
 const persistence = createBrowserPersistence(window.localStorage);
 const store = createFragmentStore(persistence.fragments);
