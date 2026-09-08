@@ -2,6 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { escapeMiroContent, createMiroClient } from "../../worker/miro.js";
 
+function gridPosition(index) {
+  return { x: (index % 4) * 320, y: Math.floor(index / 4) * 320 };
+}
+
 test("escapeMiroContent escapes HTML and preserves visual line breaks", () => {
   assert.equal(escapeMiroContent("<a> & x\r\ny\rz"), "&lt;a&gt; &amp; x<br>y<br>z");
 });
@@ -39,6 +43,40 @@ test("Miro client chooses the first open grid slot from current board stickies b
     data: { content: "&lt;hook&gt;<br>月", shape: "square" },
     position: { x: 320, y: 0 },
   });
+});
+
+test("Miro client follows item pagination before selecting a grid slot", async () => {
+  const seen = [];
+  const firstPage = Array.from({ length: 50 }, (_, index) => ({
+    id: `sticky-${index}`,
+    position: gridPosition(index),
+  }));
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board",
+    fetchImpl: async (url, init = {}) => {
+      seen.push({ url, init });
+      if ((init.method ?? "GET") === "GET" && url.includes("cursor=page-2")) {
+        return new Response(JSON.stringify({
+          data: [{ id: "sticky-50", position: gridPosition(50) }],
+        }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      if ((init.method ?? "GET") === "GET") {
+        return new Response(JSON.stringify({ data: firstPage, cursor: "page-2" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ id: "sticky-51" }), { status: 201, headers: { "content-type": "application/json" } });
+    },
+  });
+
+  const result = await client.createSticky({ text: "page test", position: { x: 0, y: 0 } });
+
+  assert.deepEqual(result, { ok: true, itemId: "sticky-51" });
+  assert.equal(seen.length, 3);
+  assert.equal(seen[1].url, "https://api.miro.com/v2/boards/board/items?type=sticky_note&limit=50&cursor=page-2");
+  assert.deepEqual(JSON.parse(seen[2].init.body).position, gridPosition(51));
 });
 
 test("Miro client sanitizes upstream failure and preserves status", async () => {
