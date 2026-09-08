@@ -1,0 +1,9 @@
+{
+  "name": "Live Lyrics",
+  "short_name": "Live Lyrics",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f4ef",
+  "theme_color": "#f5f4ef",
+  "description": "Low-friction lyric fragment capture."
+}
