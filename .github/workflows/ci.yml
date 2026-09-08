@@ -32,7 +32,7 @@ jobs:
           test -f dist/.openai/hosting.json
       - name: Check tracked source for populated Miro secrets
         run: |
-          if git grep -nE 'MIRO_ACCESS_TOKEN=[^[:space:]]+|MIRO_BOARD_ID=[^[:space:]]+|Bearer [A-Za-z0-9._-]{20,}' -- ':!docs/superpowers/**'; then
+          if git grep -nE 'MIRO_ACCESS_TOKEN=[^[:space:]]+|MIRO_BOARD_ID=[^[:space:]]+|Bearer [A-Za-z0-9._-]{20,}' -- ':!.github/workflows/ci.yml' ':!docs/superpowers/**'; then
             echo 'Potential committed credential found.'
             exit 1
           fi
