@@ -1,16 +1,69 @@
-# Lyric Capture — 项目大纲 v1
+# Live Lyrics — 项目大纲 v3
 
 ## 一句话
 
-一个只干一件事的小工具：
+一个只干一件事的 Web App：
 
-> **在 iPhone 上写下一句歌词，点一下发送，它就自动出现在固定 Miro Board 里成为一张便利贴。**
+> **打开 Live Lyrics，写下一句歌词，点一下发送，它就自动出现在固定 Miro Board 里成为一张便利贴。**
+
+优先部署：
+
+> **ChatGPT Sites**
+
+---
+
+# 为什么现在改成 Web App
+
+我们已经走过两条路线：
+
+```text
+Drafts
+↓
+自定义 Action 需要 Pro
+```
+
+然后：
+
+```text
+原生 iOS App
+↓
+最终需要 Mac / Xcode / signing 环境
+```
+
+V0 真正要验证的其实不是：
+
+> “我们会不会做一个 iOS App？”
+
+而是：
+
+> **这个 Capture 工作流到底会不会真的进入日常。**
+
+所以现在正式锁成：
+
+```text
+Web App
+↓
+ChatGPT Sites
+↓
+iPhone Safari / Home Screen
+```
+
+这样：
+
+```text
+不需要 Drafts Pro
+不需要 Mac
+不需要 Xcode
+不需要 Apple Developer
+```
+
+先把产品本身跑起来。
 
 ---
 
 # 为什么做
 
-现在的流程太烦：
+现在：
 
 ```text
 想到一句
@@ -21,22 +74,16 @@ Apple Notes
 ↓
 复制
 ↓
-打开 Miro
+Miro
 ↓
 粘贴
-↓
-整理
-↓
-删掉旧 Notes
 ```
 
-真正的问题不是没有工具。
+真正的问题：
 
-而是：
+> **Capture 和整理绑在了一起。**
 
-> **记录灵感和整理灵感被绑在了一起。**
-
-Lyric Capture 把两件事彻底拆开。
+Live Lyrics 把它们拆开。
 
 ---
 
@@ -44,26 +91,28 @@ Lyric Capture 把两件事彻底拆开。
 
 ```text
 现在
-想到一句
+打开 Live Lyrics
 ↓
-iPhone 输入
+写
 ↓
 ↗
 ↓
 结束
+```
 
+晚上：
 
-以后
+```text
 打开 Miro
 ↓
-所有句子已经在墙上
+白天的 fragment 已经在墙上
 ↓
 拖
 拼
 删
 改
 ↓
-写成完整歌词
+Compose
 ```
 
 ---
@@ -82,10 +131,12 @@ iPhone 输入
 └──────────────────────────┘
 ```
 
-只有两个入口：
+日常只有：
 
-- `Fragments`
-- `↗`
+```text
+Fragments
+↗
+```
 
 没有第三个。
 
@@ -93,43 +144,47 @@ iPhone 输入
 
 # ↗ 做什么
 
-点击后：
-
 ```text
-当前文本
+当前文字
+↓
+保存 Draft 状态
+↓
+Sending
+↓
+server-side secure proxy
 ↓
 Miro API
 ↓
 固定 Lyrics Board
 ↓
-生成 Sticky Note
+Sticky Note
 ↓
 本地标记 Sent
 ↓
-输入框恢复为空
+清空 Capture
 ```
 
-如果发送失败：
+失败：
 
 ```text
-失败
+Failed
 ↓
-原文字还在
+原文保留
 ↓
-绝对不能丢
+Retry
 ```
+
+绝对规则：
+
+> **没有确认远端成功 + 本地 Sent 持久化，不清空原文。**
 
 ---
 
 # Fragments 是什么
 
-不是笔记系统。
-
 只是：
 
 > **我以前成功扔出去过什么？**
-
-简单列表：
 
 ```text
 我不想死后没人记得我
@@ -137,156 +192,301 @@ Today 17:42
 
 我的真实是真的真实吗
 Today 16:18
-
-我连无法接受自己的自己……
-Yesterday
 ```
 
-作用：
+不是：
 
-- 不打开 Miro 也能回看；
-- 当安全备份；
-- 确认自己已经发送过什么。
-
-不用于分类、整理、写完整歌词。
+```text
+Notes
+Song Manager
+Tag System
+Project System
+```
 
 ---
 
 # Miro 是什么
 
-Miro 是真正的创作墙。
-
-每句话进去以后变成一张 Sticky：
+真正的创作墙。
 
 ```text
-┌────────────┐  ┌────────────┐
-│ fragment A │  │ fragment B │
-└────────────┘  └────────────┘
-
-      ┌────────────┐
-      │ fragment C │
-      └────────────┘
+Live Lyrics
+↓
+Miro Sticky
+↓
+以后拖拽组合
 ```
 
-以后集中创作时：
-
-- 拖到一起；
-- 重新组合；
-- 删除；
-- 改写；
-- 找 Hook；
-- 拼 Verse。
-
-这些都不属于 Capture App。
+Live Lyrics 不负责 Compose。
 
 ---
 
-# V0 不做什么
+# 部署
 
-不做：
+V0 优先：
 
 ```text
-AI
-分类
-Tag
-Folder
-Song Project
-Verse / Hook
-搜索
-录音
-语音转文字
-图片
-多个 Board
-多个平台
-Android
-社交
-协作
-自动写歌词
+GitHub
+↓
+ChatGPT Sites
+↓
+iPhone
 ```
 
-一句话：
+iPhone 可以：
 
-> **只负责把一句话贴到墙上。**
+```text
+Safari 打开
+```
+
+并优先测试：
+
+```text
+添加到主屏幕
+↓
+像独立 Web App 一样使用
+```
+
+---
+
+# ChatGPT Sites Gate
+
+正式接 Miro 前先确认：
+
+```text
+Sites 能跑 Web App UI？
+Sites 能安全保存 secret？
+Sites 能 server-side 调 Miro？
+iPhone 打开体验 OK？
+Home Screen 体验 OK？
+刷新 / 后台不会丢草稿？
+```
+
+其中最重要的是：
+
+```text
+secret
+server-side Miro request
+```
+
+如果不支持：
+
+> **STOP。**
+
+不能为了省事把 Miro token 放前端。
+
+部署层可以换，但产品架构不需要重做。
 
 ---
 
 # 技术结构
 
 ```text
-iPhone Capture
+Live Lyrics Web App
       │
-      ├── Local Fragments
-      │
-      └── ↗
-           ↓
-       Miro API
-           ↓
-      Lyrics Board
-           ↓
-        Sticky
+      ├── Capture UI
+      ├── Fragment Core
+      ├── Local Persistence
+      ├── Fragments
+      └── Secure API
+             ↓
+          Miro API
+             ↓
+          Sticky
 ```
+
+技术方向：
+
+```text
+JavaScript / TypeScript
+HTML / CSS
+Browser Storage
+Server-side API / Proxy
+ChatGPT Sites
+```
+
+保持轻量。
 
 ---
 
-# 权限
+# 之前做过的东西不是白做
 
-尽量只要：
+继续复用：
+
+```text
+Fragment model
+
+draft
+↓
+sending
+├─ sent
+└─ failed
+
+失败保词
+Retry
+防重复
+Miro adapter 行为
+网格定位
+Fragments newest-first
+核心测试语义
+```
+
+扔掉：
+
+```text
+Drafts Action
+Drafts FileManager
+Drafts Credential
+Drafts HTMLPreview
+```
+
+也不迁 Swift。
+
+---
+
+# GitHub
+
+继续用原来的：
+
+```text
+Dachi2333/live-ideas
+```
+
+不新建 repo。
+
+正确做法：
+
+```text
+main
+│
+├─ old Drafts branch
+│   └─ superseded
+│
+└─ new Web App branch
+    └─ 正式 V0
+```
+
+旧 Draft PR：
+
+```text
+保留历史
+不合并
+```
+
+Web App 稳定后：
+
+```text
+可以删旧 Drafts branch
+```
+
+main 不留 Drafts runtime。
+
+---
+
+# V0 不做
+
+```text
+AI
+Tag
+Folder
+Song
+Verse / Hook
+搜索
+录音
+Melody
+语音转文字
+图片
+多个 Board
+Android
+原生 iOS
+Widget
+Lock Screen Control
+Control Center
+Action Button
+协作
+社交
+复杂同步
+```
+
+一句话：
+
+> **V0 只负责把一句文字贴到墙上。**
+
+---
+
+# 权限 / 安全
+
+需要：
 
 ```text
 网络
-Miro Board 写入
-本地保存
+浏览器本地存储
+Miro write
+server-side secret
 ```
 
-不要：
+不需要：
 
 ```text
+麦克风
 相机
 照片
-麦克风
 定位
 通讯录
-日历
+Apple Notes
+iOS native permission
 ```
 
-Token / Secret 绝对不进 GitHub。
-
----
-
-# 开发方式
-
-这次故意试：
+最重要：
 
 ```text
-GitHub
-  ↓
-Codex Cloud
-  ↓
-线上开发
-  ↓
-公司电脑浏览器也能看 / 改 / review
-  ↓
-iPhone 真机验收
+Miro Token
+绝对不进 GitHub
+绝对不进前端 bundle
 ```
-
-GitHub 是 Source of Truth。
-
-本地电脑不是必须开发入口。
 
 ---
 
-# 真正要测试的不是“能不能写出来”
+# 真机测试
+
+必须实际拿 iPhone 测：
+
+```text
+Safari
+Home Screen
+键盘
+中文
+日文
+英文
+emoji
+多行
+刷新
+切后台
+断网
+弱网
+Miro 失败
+Retry
+Repeated Tap
+Fragments
+真实 Sticky
+失败保词
+成功清空
+```
+
+---
+
+# 真正成功标准
+
+不是：
+
+> “网站做出来了。”
 
 而是：
-
-> **它会不会真的成为我想到一句歌词时的第一反应。**
-
-成功标准：
 
 ```text
 掏手机
 ↓
-打开
+Live Lyrics
 ↓
 写
 ↓
@@ -300,8 +500,58 @@ GitHub 是 Source of Truth。
 ```text
 打开 Miro
 ↓
-便利贴已经在那里
+都已经在那里
 ```
+
+---
+
+# Future 1 — 原生 iOS
+
+只有 Web App 真的好用以后才考虑。
+
+原生 App 未来主要为了：
+
+```text
+Widget
+Lock Screen Control
+Control Center
+Action Button
+更强的系统级入口
+```
+
+不是为了重新发明 Capture。
+
+---
+
+# Future 2 — Melody Fragment
+
+未来：
+
+```text
+突然想到旋律
+↓
+系统入口
+↓
+直接录音
+↓
+Melody Fragment
+```
+
+不默认转文字。
+
+---
+
+# Future 3 — Song
+
+```text
+Text Fragment ───┐
+                 ├──→ Song
+Melody Fragment ─┘
+```
+
+Song 属于 Compose。
+
+不进入 V0。
 
 ---
 
@@ -309,9 +559,9 @@ GitHub 是 Source of Truth。
 
 > **不要让整理行为杀死灵感发生本身。**
 
-> **灵感发生时，不要求灵感负责整理自己。**
-
 > **Capture 负责留下，Compose 负责决定意义。**
+
+> **语言来了，就留下文字；旋律来了，就留下声音。**
 
 > **iPhone 是口袋里的便利贴，Miro 是墙。**
 
@@ -319,10 +569,30 @@ GitHub 是 Source of Truth。
 
 # V0 LOCK
 
-最终只有：
+最终：
 
 ```text
-Fragments    ↗
+Fragments                              ↗
 ```
 
-不加任何东西。
+链路：
+
+```text
+打开 Live Lyrics Web App
+↓
+写一句
+↓
+↗
+↓
+Miro Sticky
+```
+
+**Web App。**
+
+**ChatGPT Sites 优先部署。**
+
+**不依赖 Drafts。**
+
+**不依赖原生 iOS。**
+
+**不加任何东西。**
