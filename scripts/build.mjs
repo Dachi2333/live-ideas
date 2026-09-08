@@ -13,3 +13,9 @@ await build({
   entryPoints: ["drafts/send-entry.js"],
   outfile: "dist/live-lyrics-send.js",
 });
+
+await build({
+  ...common,
+  entryPoints: ["drafts/fragments-entry.js"],
+  outfile: "dist/live-lyrics-fragments.js",
+});
