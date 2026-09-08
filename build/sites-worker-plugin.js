@@ -11,6 +11,19 @@ async function exists(path) {
   }
 }
 
+export async function findSitesWorkerBuild(root) {
+  const candidates = [
+    resolve(root, "dist", "live_lyrics", "index.js"),
+    resolve(root, "dist", "live-lyrics", "index.js"),
+  ];
+
+  for (const candidate of candidates) {
+    if (await exists(candidate)) return candidate;
+  }
+
+  return null;
+}
+
 export function copySitesWorker() {
   let root = process.cwd();
   return {
@@ -18,8 +31,8 @@ export function copySitesWorker() {
     apply: "build",
     configResolved(config) { root = config.root; },
     async closeBundle() {
-      const cloudflareWorker = resolve(root, "dist", "live-lyrics", "index.js");
-      if (!(await exists(cloudflareWorker))) throw new Error("Sites worker build was not produced");
+      const cloudflareWorker = await findSitesWorkerBuild(root);
+      if (!cloudflareWorker) throw new Error("Sites worker build was not produced");
       const serverDirectory = resolve(root, "dist", "server");
       await mkdir(serverDirectory, { recursive: true });
       await cp(cloudflareWorker, resolve(serverDirectory, "index.js"));
