@@ -4,6 +4,7 @@ import { createBrowserPersistence } from "./local-storage.js";
 import { createRemoteClient } from "./remote.js";
 import { createCaptureViewModel } from "./view-model.js";
 import { renderFragments } from "./render.js";
+import { shouldPreventCapturePan } from "./capture-pan.js";
 
 function syncVisualViewportHeight() {
   const viewport = window.visualViewport;
@@ -33,6 +34,41 @@ const input = document.querySelector("#capture-input");
 const sendButton = document.querySelector("#send-button");
 const status = document.querySelector("#capture-status");
 const fragmentsList = document.querySelector("#fragments-list");
+
+let captureTouchY = null;
+
+captureView.addEventListener("touchstart", (event) => {
+  captureTouchY = event.touches.length === 1 ? event.touches[0].clientY : null;
+}, { passive: true });
+
+captureView.addEventListener("touchmove", (event) => {
+  if (event.touches.length !== 1 || captureTouchY === null) {
+    if (event.cancelable) event.preventDefault();
+    return;
+  }
+
+  const currentY = event.touches[0].clientY;
+  const deltaY = currentY - captureTouchY;
+  captureTouchY = currentY;
+  const isInput = event.target === input || input.contains(event.target);
+
+  if (shouldPreventCapturePan({
+    isInput,
+    scrollTop: input.scrollTop,
+    scrollHeight: input.scrollHeight,
+    clientHeight: input.clientHeight,
+    deltaY,
+  }) && event.cancelable) {
+    event.preventDefault();
+  }
+}, { passive: false });
+
+function clearCaptureTouch() {
+  captureTouchY = null;
+}
+
+captureView.addEventListener("touchend", clearCaptureTouch, { passive: true });
+captureView.addEventListener("touchcancel", clearCaptureTouch, { passive: true });
 
 function messageFor(error) {
   if (!error) return "";
