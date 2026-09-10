@@ -1,5 +1,8 @@
 import { getStickyPosition } from "../src/domain/positioning.js";
 
+const DEFAULT_STICKY_WIDTH = 199;
+const DEFAULT_STICKY_HEIGHT = 228;
+
 export function escapeMiroContent(text) {
   return text
     .replaceAll("&", "&amp;")
@@ -18,17 +21,26 @@ function positionKey(position) {
   return `${normalizedCoordinate(position.x)}:${normalizedCoordinate(position.y)}`;
 }
 
-function firstOpenGridPosition(items) {
-  const occupied = new Set(
-    items
-      .map((item) => item?.position)
-      .filter((position) => Number.isFinite(position?.x) && Number.isFinite(position?.y))
-      .map(positionKey),
-  );
+function overlapsGridPosition(item, candidate) {
+  const position = item?.position;
+  if (!Number.isFinite(position?.x) || !Number.isFinite(position?.y)) return false;
 
+  const width = item?.geometry?.width;
+  const height = item?.geometry?.height;
+  if (!Number.isFinite(width) || !Number.isFinite(height)) {
+    return positionKey(position) === positionKey(candidate);
+  }
+
+  return (
+    Math.abs(position.x - candidate.x) < (width + DEFAULT_STICKY_WIDTH) / 2
+    && Math.abs(position.y - candidate.y) < (height + DEFAULT_STICKY_HEIGHT) / 2
+  );
+}
+
+function firstOpenGridPosition(items) {
   for (let index = 0; ; index += 1) {
     const position = getStickyPosition(index);
-    if (!occupied.has(positionKey(position))) return position;
+    if (!items.some((item) => overlapsGridPosition(item, position))) return position;
   }
 }
 
