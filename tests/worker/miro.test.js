@@ -79,6 +79,35 @@ test("Miro client follows item pagination before selecting a grid slot", async (
   assert.deepEqual(JSON.parse(seen[2].init.body).position, gridPosition(51));
 });
 
+test("Miro client treats a manually shifted sticky as occupying any grid slot its geometry overlaps", async () => {
+  const seen = [];
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board",
+    fetchImpl: async (url, init = {}) => {
+      seen.push({ url, init });
+      if ((init.method ?? "GET") === "GET") {
+        return new Response(JSON.stringify({
+          data: [
+            {
+              id: "shifted-sticky",
+              geometry: { width: 199, height: 228 },
+              position: { x: 19.106737038390076, y: 34.119110065097196, relativeTo: "canvas_center" },
+              parent: null,
+            },
+          ],
+        }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ id: "sticky-new" }), { status: 201, headers: { "content-type": "application/json" } });
+    },
+  });
+
+  const result = await client.createSticky({ text: "after freeform move" });
+
+  assert.deepEqual(result, { ok: true, itemId: "sticky-new" });
+  assert.deepEqual(JSON.parse(seen.at(-1).init.body).position, { x: 320, y: 0 });
+});
+
 test("Miro client converts frame-relative sticky coordinates before choosing an open grid slot", async () => {
   const seen = [];
   const client = createMiroClient({
