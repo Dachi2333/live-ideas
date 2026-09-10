@@ -10,8 +10,12 @@ export function escapeMiroContent(text) {
     .replaceAll("\n", "<br>");
 }
 
+function normalizedCoordinate(value) {
+  return Math.round(value * 1000) / 1000;
+}
+
 function positionKey(position) {
-  return `${position.x}:${position.y}`;
+  return `${normalizedCoordinate(position.x)}:${normalizedCoordinate(position.y)}`;
 }
 
 function firstOpenGridPosition(items) {
@@ -34,6 +38,7 @@ export function createMiroClient({ fetchImpl = fetch, accessToken, boardId }) {
     Accept: "application/json",
     Authorization: `Bearer ${accessToken}`,
   };
+  const itemCache = new Map();
 
   async function listStickyItems() {
     const items = [];
@@ -65,6 +70,83 @@ export function createMiroClient({ fetchImpl = fetch, accessToken, boardId }) {
     return { ok: true, items };
   }
 
+  async function getItem(itemId) {
+    if (itemCache.has(itemId)) return { ok: true, item: itemCache.get(itemId) };
+
+    const response = await fetchImpl(
+      `https://api.miro.com/v2/boards/${encodedBoardId}/items/${encodeURIComponent(itemId)}`,
+      {
+        method: "GET",
+        headers: authorizationHeaders,
+      },
+    );
+    if (response.status !== 200) {
+      return { ok: false, statusCode: response.status };
+    }
+
+    const item = await response.json().catch(() => null);
+    if (!item || typeof item !== "object") return { ok: false };
+    itemCache.set(itemId, item);
+    return { ok: true, item };
+  }
+
+  async function resolveCanvasPosition(item, ancestors = new Set()) {
+    const position = item?.position;
+    if (!Number.isFinite(position?.x) || !Number.isFinite(position?.y)) {
+      return { ok: false };
+    }
+
+    const parentId = item?.parent?.id;
+    if (!parentId || !position.relativeTo || position.relativeTo === "canvas_center") {
+      return { ok: true, position: { x: position.x, y: position.y } };
+    }
+
+    if (ancestors.has(parentId)) return { ok: false };
+    const parentResult = await getItem(parentId);
+    if (!parentResult.ok) return parentResult;
+
+    const nextAncestors = new Set(ancestors);
+    if (typeof item?.id === "string") nextAncestors.add(item.id);
+    const parentPositionResult = await resolveCanvasPosition(parentResult.item, nextAncestors);
+    if (!parentPositionResult.ok) return parentPositionResult;
+
+    const parentPosition = parentPositionResult.position;
+    if (position.relativeTo === "parent_center") {
+      return {
+        ok: true,
+        position: {
+          x: parentPosition.x + position.x,
+          y: parentPosition.y + position.y,
+        },
+      };
+    }
+
+    if (position.relativeTo === "parent_top_left") {
+      const width = parentResult.item?.geometry?.width;
+      const height = parentResult.item?.geometry?.height;
+      if (!Number.isFinite(width) || !Number.isFinite(height)) return { ok: false };
+      return {
+        ok: true,
+        position: {
+          x: parentPosition.x - width / 2 + position.x,
+          y: parentPosition.y - height / 2 + position.y,
+        },
+      };
+    }
+
+    return { ok: false };
+  }
+
+  async function normalizeStickyPositions(items) {
+    const normalized = [];
+    for (const item of items) {
+      const resolved = await resolveCanvasPosition(item);
+      if (!resolved.ok) return resolved;
+      normalized.push({ ...item, position: resolved.position });
+    }
+    return { ok: true, items: normalized };
+  }
+
   return {
     async createSticky({ text }) {
       try {
@@ -77,7 +159,16 @@ export function createMiroClient({ fetchImpl = fetch, accessToken, boardId }) {
           };
         }
 
-        const position = firstOpenGridPosition(listed.items);
+        const normalized = await normalizeStickyPositions(listed.items);
+        if (!normalized.ok) {
+          return {
+            ok: false,
+            ...(normalized.statusCode ? { statusCode: normalized.statusCode } : {}),
+            error: "miro_create_failed",
+          };
+        }
+
+        const position = firstOpenGridPosition(normalized.items);
         const response = await fetchImpl(
           `https://api.miro.com/v2/boards/${encodedBoardId}/sticky_notes`,
           {
