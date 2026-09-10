@@ -79,6 +79,57 @@ test("Miro client follows item pagination before selecting a grid slot", async (
   assert.deepEqual(JSON.parse(seen[2].init.body).position, gridPosition(51));
 });
 
+test("Miro client converts frame-relative sticky coordinates before choosing an open grid slot", async () => {
+  const seen = [];
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board",
+    fetchImpl: async (url, init = {}) => {
+      seen.push({ url, init });
+      if ((init.method ?? "GET") === "GET" && url.endsWith("/items/frame-1")) {
+        return new Response(JSON.stringify({
+          id: "frame-1",
+          type: "frame",
+          geometry: { width: 1470.6817155594667, height: 794.2273389678111 },
+          position: {
+            x: 410.79598252518736,
+            y: 112.70676513082634,
+            relativeTo: "canvas_center",
+          },
+          parent: null,
+        }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      if ((init.method ?? "GET") === "GET") {
+        return new Response(JSON.stringify({
+          data: [
+            {
+              id: "sticky-in-frame",
+              position: {
+                x: 324.544875254546,
+                y: 284.4069043530792,
+                relativeTo: "parent_top_left",
+              },
+              parent: { id: "frame-1" },
+            },
+            {
+              id: "sticky-top-level",
+              position: { x: 320, y: 0, relativeTo: "canvas_center" },
+              parent: null,
+            },
+          ],
+        }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ id: "sticky-new" }), { status: 201, headers: { "content-type": "application/json" } });
+    },
+  });
+
+  const result = await client.createSticky({ text: "after manual move" });
+
+  assert.deepEqual(result, { ok: true, itemId: "sticky-new" });
+  assert.equal(seen[1].url, "https://api.miro.com/v2/boards/board/items/frame-1");
+  assert.deepEqual(JSON.parse(seen.at(-1).init.body).position, { x: 640, y: 0 });
+});
+
 test("Miro client sanitizes upstream failure and preserves status", async () => {
   const client = createMiroClient({ accessToken: "secret", boardId: "board", fetchImpl: async () => new Response("PRIVATE UPSTREAM BODY", { status: 429 }) });
   const result = await client.createSticky({ text: "x", position: { x: 0, y: 0 } });
