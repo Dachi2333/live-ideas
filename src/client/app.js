@@ -28,8 +28,8 @@ const vm = createCaptureViewModel({
 
 const captureView = document.querySelector("#capture-view");
 const fragmentsView = document.querySelector("#fragments-view");
-const fragmentsButton = document.querySelector("#fragments-button");
-const backButton = document.querySelector("#back-button");
+const captureTab = document.querySelector("#capture-tab");
+const fragmentsTab = document.querySelector("#fragments-tab");
 const input = document.querySelector("#capture-input");
 const sendButton = document.querySelector("#send-button");
 const status = document.querySelector("#capture-status");
@@ -75,17 +75,35 @@ function messageFor(error) {
   if (error === "local_save_failed" || error === "local_clear_failed") return "Couldn’t save locally. Keep this page open.";
   if (error === "unauthorized") return "This Site isn’t authorized for sending.";
   if (error === "runtime_not_configured") return "Miro setup is not configured yet.";
-  if (error === "miro_create_failed") return "Miro send failed. Tap ↗ to retry.";
-  if (error === "network_error") return "Offline. Your words are still here — tap ↗ to retry.";
-  return "Send failed. Your words are still here — tap ↗ to retry.";
+  if (error === "miro_create_failed") return "Failed to send. Tap to retry.";
+  if (error === "network_error") return "Offline. Tap to retry.";
+  return "Failed to send. Tap to retry.";
+}
+
+function statusFor(state) {
+  if (state.sending) return "Sending…";
+  if (state.error) return messageFor(state.error);
+  if (state.text.length >= 120) return `${state.text.length} characters`;
+  if (state.text.length > 0) return "Typing…";
+  return "Ready";
 }
 
 function renderCaptureState() {
   const state = vm.getState();
   if (document.activeElement !== input && input.value !== state.text) input.value = state.text;
+
   input.disabled = state.sending;
   sendButton.disabled = state.sending || state.text.length === 0;
-  status.textContent = state.sending ? "Sending…" : messageFor(state.error);
+  status.textContent = statusFor(state);
+  status.classList.toggle("is-error", Boolean(state.error));
+
+  sendButton.classList.toggle("is-sending", state.sending);
+  sendButton.classList.toggle("is-error", Boolean(state.error) && !state.sending);
+  sendButton.textContent = state.error && !state.sending ? "↻" : state.sending ? "" : "→";
+  sendButton.setAttribute(
+    "aria-label",
+    state.sending ? "Sending fragment" : state.error ? "Retry fragment" : "Send fragment",
+  );
 }
 
 function formatTime(iso) {
@@ -96,14 +114,23 @@ function formatTime(iso) {
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diffDays = Math.round((today - day) / 86400000);
   const time = new Intl.DateTimeFormat(undefined, { hour: "2-digit", minute: "2-digit" }).format(date);
-  if (diffDays === 0) return `Today ${time}`;
+  if (diffDays === 0) return time;
   if (diffDays === 1) return `Yesterday ${time}`;
   return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
+}
+
+function setActiveView(view) {
+  const captureActive = view === "capture";
+  captureTab.classList.toggle("is-active", captureActive);
+  fragmentsTab.classList.toggle("is-active", !captureActive);
+  captureTab.setAttribute("aria-selected", String(captureActive));
+  fragmentsTab.setAttribute("aria-selected", String(!captureActive));
 }
 
 function showCapture() {
   fragmentsView.hidden = true;
   captureView.hidden = false;
+  setActiveView("capture");
   renderCaptureState();
   requestAnimationFrame(() => input.focus());
 }
@@ -113,8 +140,10 @@ function showFragments() {
   fragmentsList.innerHTML = sent.length
     ? renderFragments(sent, { formatTime })
     : '<div class="fragments-empty">No fragments yet.</div>';
+  input.blur();
   captureView.hidden = true;
   fragmentsView.hidden = false;
+  setActiveView("fragments");
 }
 
 input.value = vm.getState().text;
@@ -133,7 +162,8 @@ sendButton.addEventListener("click", async () => {
   if (vm.getState().text.length === 0) input.focus();
 });
 
-fragmentsButton.addEventListener("click", showFragments);
-backButton.addEventListener("click", showCapture);
+captureTab.addEventListener("click", showCapture);
+fragmentsTab.addEventListener("click", showFragments);
 
+setActiveView("capture");
 renderCaptureState();
