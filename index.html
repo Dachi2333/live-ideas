@@ -3,30 +3,37 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)" />
-  <meta name="theme-color" content="#111111" media="(prefers-color-scheme: dark)" />
+  <meta name="theme-color" content="#191b1a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Live Lyrics" />
   <link rel="manifest" href="/manifest.webmanifest" />
   <title>Live Lyrics</title>
 </head>
 <body>
   <main id="app" class="app-shell">
-    <section id="capture-view" class="capture-view" aria-label="Capture">
-      <button id="fragments-button" class="text-action" type="button">Fragments</button>
-      <textarea id="capture-input" class="capture-input" aria-label="Lyric fragment" placeholder="type something..." autofocus spellcheck="false"></textarea>
-      <div id="capture-status" class="capture-status" aria-live="polite"></div>
-      <button id="send-button" class="send-action" type="button" aria-label="Send fragment">↗</button>
+    <header class="app-header">
+      <div class="app-brand">Live Lyrics</div>
+    </header>
+
+    <section id="capture-view" class="app-view capture-view" aria-label="Capture">
+      <div class="capture-card">
+        <textarea id="capture-input" class="capture-input" aria-label="Lyric fragment" placeholder="Type what you hear..." autofocus spellcheck="false"></textarea>
+        <div class="capture-footer">
+          <div id="capture-status" class="capture-status" aria-live="polite"></div>
+          <button id="send-button" class="send-action" type="button" aria-label="Send fragment">→</button>
+        </div>
+      </div>
     </section>
 
-    <section id="fragments-view" class="fragments-view" aria-label="Fragments" hidden>
-      <header class="fragments-header">
-        <button id="back-button" class="back-action" type="button" aria-label="Back to capture">←</button>
-        <h1>FRAGMENTS</h1>
-      </header>
+    <section id="fragments-view" class="app-view fragments-view" aria-label="Fragments" hidden>
       <div id="fragments-list" class="fragments-list"></div>
     </section>
+
+    <nav class="app-tabs" aria-label="Sections">
+      <button id="capture-tab" class="app-tab is-active" type="button" aria-selected="true">Capture</button>
+      <button id="fragments-tab" class="app-tab" type="button" aria-selected="false">Fragments</button>
+    </nav>
   </main>
   <script type="module" src="/src/client/app.js"></script>
 </body>
