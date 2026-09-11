@@ -3,7 +3,7 @@
   "short_name": "Live Lyrics",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f5f4ef",
-  "theme_color": "#f5f4ef",
+  "background_color": "#191b1a",
+  "theme_color": "#191b1a",
   "description": "Low-friction lyric fragment capture."
 }
