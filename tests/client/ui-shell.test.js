@@ -29,6 +29,18 @@ test("approved visual system is dark charcoal with vivid orange accent", async (
   assert.equal(manifest.theme_color.toLowerCase(), "#191b1a");
 });
 
+test("capture state uses the reference Ready, Typing, long text, sending, and retry treatments", async () => {
+  const app = await readFile(new URL("../../src/client/app.js", import.meta.url), "utf8");
+  assert.match(app, /"Ready"/);
+  assert.match(app, /"Typing…"/);
+  assert.match(app, /state\.text\.length\s*>=\s*120/);
+  assert.match(app, /`\$\{state\.text\.length\} characters`/);
+  assert.match(app, /"Sending…"/);
+  assert.match(app, /"↻"/);
+  assert.match(app, /captureTab\.classList\.toggle\("is-active"/);
+  assert.match(app, /fragmentsTab\.classList\.toggle\("is-active"/);
+});
+
 test("shell declares standalone web-app metadata without a service worker", async () => {
   const html = await readFile(new URL("../../index.html", import.meta.url), "utf8");
   const manifest = JSON.parse(await readFile(new URL("../../public/manifest.webmanifest", import.meta.url), "utf8"));
