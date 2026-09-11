@@ -6,6 +6,9 @@ import { createCaptureViewModel } from "./view-model.js";
 import { renderFragments } from "./render.js";
 import { shouldPreventCapturePan } from "./capture-pan.js";
 
+const sendIcon = `<svg class="send-icon" viewBox="0 0 24 24" aria-hidden="true"><path class="send-shape" d="M5.25 12h12.4M13.35 7.7 17.65 12l-4.3 4.3" /></svg>`;
+const retryIcon = `<svg class="retry-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8" /><path d="M21 3v5h-5" /></svg>`;
+
 function syncVisualViewportHeight() {
   const viewport = window.visualViewport;
   const height = viewport?.height ?? window.innerHeight;
@@ -26,8 +29,11 @@ const vm = createCaptureViewModel({
   now: () => new Date().toISOString(),
 });
 
+const appShell = document.querySelector("#app");
+const contentArea = document.querySelector("#content-area");
 const captureView = document.querySelector("#capture-view");
 const fragmentsView = document.querySelector("#fragments-view");
+const tabs = document.querySelector("#app-tabs");
 const captureTab = document.querySelector("#capture-tab");
 const fragmentsTab = document.querySelector("#fragments-tab");
 const input = document.querySelector("#capture-input");
@@ -36,6 +42,8 @@ const status = document.querySelector("#capture-status");
 const fragmentsList = document.querySelector("#fragments-list");
 
 let captureTouchY = null;
+let touchStartX = null;
+let touchStartY = null;
 
 captureView.addEventListener("touchstart", (event) => {
   captureTouchY = event.touches.length === 1 ? event.touches[0].clientY : null;
@@ -98,8 +106,14 @@ function renderCaptureState() {
   status.classList.toggle("is-error", Boolean(state.error));
 
   sendButton.classList.toggle("is-sending", state.sending);
-  sendButton.classList.toggle("is-error", Boolean(state.error) && !state.sending);
-  sendButton.textContent = state.error && !state.sending ? "↻" : state.sending ? "" : "→";
+  sendButton.classList.toggle("is-retry", Boolean(state.error) && !state.sending);
+  if (state.sending) {
+    sendButton.innerHTML = "";
+  } else if (state.error) {
+    sendButton.innerHTML = retryIcon;
+  } else {
+    sendButton.innerHTML = sendIcon;
+  }
   sendButton.setAttribute(
     "aria-label",
     state.sending ? "Sending fragment" : state.error ? "Retry fragment" : "Send fragment",
@@ -119,30 +133,34 @@ function formatTime(iso) {
   return new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
+function renderFragmentsView() {
+  const sent = vm.listSent();
+  fragmentsList.innerHTML = sent.length
+    ? renderFragments(sent, { formatTime })
+    : '<div class="fragments-empty">No fragments yet.</div>';
+}
+
 function setActiveView(view) {
   const captureActive = view === "capture";
+  appShell.dataset.page = view;
+  tabs.dataset.active = view;
   captureTab.classList.toggle("is-active", captureActive);
   fragmentsTab.classList.toggle("is-active", !captureActive);
   captureTab.setAttribute("aria-selected", String(captureActive));
   fragmentsTab.setAttribute("aria-selected", String(!captureActive));
+  captureView.setAttribute("aria-hidden", String(!captureActive));
+  fragmentsView.setAttribute("aria-hidden", String(captureActive));
 }
 
 function showCapture() {
-  fragmentsView.hidden = true;
-  captureView.hidden = false;
   setActiveView("capture");
   renderCaptureState();
   requestAnimationFrame(() => input.focus());
 }
 
 function showFragments() {
-  const sent = vm.listSent();
-  fragmentsList.innerHTML = sent.length
-    ? renderFragments(sent, { formatTime })
-    : '<div class="fragments-empty">No fragments yet.</div>';
+  renderFragmentsView();
   input.blur();
-  captureView.hidden = true;
-  fragmentsView.hidden = false;
   setActiveView("fragments");
 }
 
@@ -164,6 +182,24 @@ sendButton.addEventListener("click", async () => {
 
 captureTab.addEventListener("click", showCapture);
 fragmentsTab.addEventListener("click", showFragments);
+
+contentArea.addEventListener("touchstart", (event) => {
+  if (event.touches.length !== 1) return;
+  touchStartX = event.touches[0].clientX;
+  touchStartY = event.touches[0].clientY;
+}, { passive: true });
+
+contentArea.addEventListener("touchend", (event) => {
+  if (touchStartX === null || touchStartY === null || event.changedTouches.length !== 1) return;
+  const dx = event.changedTouches[0].clientX - touchStartX;
+  const dy = event.changedTouches[0].clientY - touchStartY;
+  touchStartX = null;
+  touchStartY = null;
+
+  if (Math.abs(dx) < 56 || Math.abs(dx) <= Math.abs(dy)) return;
+  if (dx < 0 && appShell.dataset.page === "capture") showFragments();
+  if (dx > 0 && appShell.dataset.page === "fragments") showCapture();
+}, { passive: true });
 
 setActiveView("capture");
 renderCaptureState();
