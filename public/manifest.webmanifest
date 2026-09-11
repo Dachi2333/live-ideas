@@ -1,9 +1,9 @@
 {
-  "name": "Live Lyrics",
-  "short_name": "Live Lyrics",
+  "name": "Live Ideas",
+  "short_name": "Live Ideas",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#191b1a",
   "theme_color": "#191b1a",
-  "description": "Low-friction lyric fragment capture."
+  "description": "Low-friction idea fragment capture."
 }
