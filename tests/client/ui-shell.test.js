@@ -2,14 +2,31 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("mobile shell exposes only capture, Fragments, and send as daily controls", async () => {
+test("mobile shell matches the approved Live Lyrics capture and Fragments navigation", async () => {
   const html = await readFile(new URL("../../index.html", import.meta.url), "utf8");
-  assert.match(html, /id="fragments-button"[^>]*>Fragments</);
+  assert.match(html, /class="app-brand"[^>]*>Live Lyrics</);
   assert.match(html, /id="capture-input"/);
-  assert.match(html, /id="send-button"[^>]*>↗</);
+  assert.match(html, /placeholder="Type what you hear\.\.\."/);
+  assert.match(html, /id="send-button"[^>]*>→</);
+  assert.match(html, /id="capture-tab"[^>]*>Capture</);
+  assert.match(html, /id="fragments-tab"[^>]*>Fragments</);
   assert.match(html, /id="fragments-view"/);
   assert.doesNotMatch(html, />\s*(Search|Tags|Folder|Song|Record|AI)\s*</i);
   assert.doesNotMatch(html, /contenteditable/);
+});
+
+test("approved visual system is dark charcoal with vivid orange accent", async () => {
+  const css = await readFile(new URL("../../src/client/styles.css", import.meta.url), "utf8");
+  const manifest = JSON.parse(await readFile(new URL("../../public/manifest.webmanifest", import.meta.url), "utf8"));
+
+  assert.match(css, /--color-bg:\s*#191b1a/i);
+  assert.match(css, /--color-accent:\s*#ff4b1f/i);
+  assert.match(css, /\.app-brand\s*\{[^}]*color:\s*var\(--color-accent\)/s);
+  assert.match(css, /\.capture-card\s*\{[^}]*border-radius:/s);
+  assert.match(css, /\.send-action\s*\{[^}]*border-radius:\s*50%/s);
+  assert.match(css, /\.app-tab\.is-active::before/s);
+  assert.equal(manifest.background_color.toLowerCase(), "#191b1a");
+  assert.equal(manifest.theme_color.toLowerCase(), "#191b1a");
 });
 
 test("shell declares standalone web-app metadata without a service worker", async () => {
