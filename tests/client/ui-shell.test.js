@@ -10,6 +10,8 @@ test("mobile shell matches the approved Live Ideas capture and Fragments navigat
   assert.match(html, /id="send-button"[^>]*>[\s\S]*<svg[^>]*class="send-icon"/);
   assert.match(html, /id="capture-tab"[^>]*>Capture</);
   assert.match(html, /id="fragments-tab"[^>]*>Fragments</);
+  assert.match(html, /id="tab-indicator"/);
+  assert.match(html, /id="content-area"/);
   assert.match(html, /id="fragments-view"/);
   assert.doesNotMatch(html, />\s*(Search|Tags|Folder|Song|Record|AI)\s*</i);
   assert.doesNotMatch(html, /contenteditable/);
@@ -34,14 +36,31 @@ test("approved v4 visual proportions use the refined tab, bar, send, and retry s
   assert.equal(manifest.theme_color.toLowerCase(), "#191b1a");
 });
 
-test("capture state uses the reference Ready, Typing, long text, sending, and retry treatments", async () => {
+test("tabs animate the page track and one centered indicator instead of swapping hidden views", async () => {
+  const css = await readFile(new URL("../../src/client/styles.css", import.meta.url), "utf8");
+  const app = await readFile(new URL("../../src/client/app.js", import.meta.url), "utf8");
+
+  assert.match(css, /\.app-view\s*\{[^}]*position:\s*absolute[^}]*transition:\s*transform\s+285ms/s);
+  assert.match(css, /\.fragments-view\s*\{[^}]*transform:\s*translateX\(112%\)/s);
+  assert.match(css, /\.app-shell\[data-page="fragments"\]\s+\.capture-view\s*\{[^}]*translateX\(-112%\)/s);
+  assert.match(css, /\.app-shell\[data-page="fragments"\]\s+\.fragments-view\s*\{[^}]*translateX\(0\)/s);
+  assert.match(css, /\.tab-indicator\s*\{[^}]*left:\s*calc\(25% \+ 10px\)[^}]*transition:\s*left\s+270ms/s);
+  assert.match(css, /\.app-tabs\[data-active="fragments"\]\s+\.tab-indicator\s*\{[^}]*left:\s*calc\(75% - 10px\)/s);
+  assert.match(app, /appShell\.dataset\.page\s*=\s*view/);
+  assert.match(app, /tabs\.dataset\.active\s*=\s*view/);
+  assert.match(app, /touchStartX/);
+  assert.match(app, /Math\.abs\(dx\)\s*<\s*56/);
+});
+
+test("capture state uses the reference Ready, Typing, long text, sending, and SVG retry treatments", async () => {
   const app = await readFile(new URL("../../src/client/app.js", import.meta.url), "utf8");
   assert.match(app, /"Ready"/);
   assert.match(app, /"Typing…"/);
   assert.match(app, /state\.text\.length\s*>=\s*120/);
   assert.match(app, /`\$\{state\.text\.length\} characters`/);
   assert.match(app, /"Sending…"/);
-  assert.match(app, /retryButton\.hidden\s*=\s*!state\.error/);
+  assert.match(app, /const retryIcon\s*=\s*`<svg/);
+  assert.match(app, /sendButton\.innerHTML\s*=\s*retryIcon/);
   assert.match(app, /captureTab\.classList\.toggle\("is-active"/);
   assert.match(app, /fragmentsTab\.classList\.toggle\("is-active"/);
 });
@@ -63,7 +82,7 @@ test("capture shell stays fixed without feeding iOS visual viewport scroll back 
   assert.match(css, /html, body, #app\s*\{[^}]*overflow:\s*hidden/s);
   assert.match(css, /\.app-shell\s*\{[^}]*position:\s*fixed[^}]*height:\s*var\(--app-viewport-height/s);
   assert.match(css, /\.capture-view\s*\{[^}]*overflow:\s*hidden/s);
-  assert.match(css, /\.fragments-view\s*\{[^}]*overflow-y:\s*auto/s);
+  assert.match(css, /\.fragments-list\s*\{[^}]*overflow-y:\s*auto/s);
   assert.match(app, /window\.visualViewport/);
   assert.match(app, /--app-viewport-height/);
   assert.doesNotMatch(app, /--app-viewport-top/);
