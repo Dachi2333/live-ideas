@@ -156,4 +156,4 @@ The test suite covers capture reliability, local persistence/migration, Fragment
 
 ## License
 
-A license will be added before the repository is made public. The release gate requires an explicit maintainer choice rather than silently assigning one.
+Live Ideas is released under the [MIT License](./LICENSE).
