@@ -24,6 +24,13 @@ export function createFragmentStore({ read, write }) {
       save(next);
       return fragment;
     },
+    remove(id) {
+      const items = all();
+      const next = items.filter((item) => item.id !== id);
+      if (next.length === items.length) return false;
+      save(next);
+      return true;
+    },
     listSent() {
       return all()
         .filter((item) => item.status === "sent")
