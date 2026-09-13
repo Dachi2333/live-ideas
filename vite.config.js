@@ -12,18 +12,7 @@ export default defineConfig(async () => {
     plugins: [
       sites(),
       copySitesWorker(),
-      cloudflare({
-        config: {
-          name: "live-ideas",
-          main: "./worker/index.js",
-          compatibility_date: "2026-09-01",
-          assets: {
-            binding: "ASSETS",
-            not_found_handling: "single-page-application",
-            run_worker_first: ["/*"],
-          },
-        },
-      }),
+      cloudflare(),
     ],
   };
 });
