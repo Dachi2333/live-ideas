@@ -30,6 +30,12 @@ test("Figma-approved visual tokens and proportions are used", async () => {
   assert.equal(manifest.name, "Live Ideas");
 });
 
+test("autofocused capture textarea does not render a giant accent focus outline", async () => {
+  const css = await readFile(new URL("../../src/client/styles.css", import.meta.url), "utf8");
+  assert.doesNotMatch(css, /textarea:focus-visible/);
+  assert.match(css, /button:focus-visible\s*\{/);
+});
+
 test("Capture and Fragments use direct-manipulation page swiping", async () => {
   const css = await readFile(new URL("../../src/client/styles.css", import.meta.url), "utf8");
   const app = await readFile(new URL("../../src/client/app.js", import.meta.url), "utf8");
