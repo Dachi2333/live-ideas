@@ -30,6 +30,18 @@ test("listSent returns sent records newest first only", () => {
   assert.deepEqual(store.listSent().map((f) => f.id), ["new", "old"]);
 });
 
+test("remove deletes only the matching local fragment", () => {
+  const io = memoryStore([
+    { id: "keep", text: "keep", status: "sent", sentAt: "2026-09-08T10:00:00.000Z" },
+    { id: "delete", text: "delete", status: "sent", sentAt: "2026-09-08T11:00:00.000Z" },
+  ]);
+  const store = createFragmentStore(io);
+  assert.equal(store.remove("delete"), true);
+  assert.equal(store.get("delete"), null);
+  assert.equal(store.get("keep").text, "keep");
+  assert.equal(store.remove("missing"), false);
+});
+
 test("store rejects duplicate insert and missing replace", () => {
   const io = memoryStore([{ id: "a", text: "A", createdAt: "1", sentAt: null, status: "draft" }]);
   const store = createFragmentStore(io);
