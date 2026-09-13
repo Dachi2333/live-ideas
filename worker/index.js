@@ -1,7 +1,21 @@
-import { handleCreateFragment } from "./api.js";
+import { authorizeSelfHost, handleCreateFragment, isSelfHostMode } from "./api.js";
+
+function selfHostChallenge() {
+  return new Response("Authentication required", {
+    status: 401,
+    headers: {
+      "cache-control": "no-store",
+      "www-authenticate": 'Basic realm="Live Ideas", charset="UTF-8"',
+    },
+  });
+}
 
 export default {
   async fetch(request, env) {
+    if (isSelfHostMode(env) && !authorizeSelfHost(request, env.SELF_HOST_PASSWORD)) {
+      return selfHostChallenge();
+    }
+
     const url = new URL(request.url);
     if (url.pathname === "/api/fragments") {
       if (request.method !== "POST") {
