@@ -1,10 +1,25 @@
-# Live Ideas
+<p align="center">
+  <img src="./docs/assets/readme/hero.webp" alt="Live Ideas — capture on your phone, send to Miro, organize later" width="100%" />
+</p>
 
-**English** · [简体中文](./README.zh-CN.md) · [日本語](./README.ja.md)
+<p align="center">
+  <strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a> · <a href="./README.ja.md">日本語</a>
+</p>
 
-> **Capture now. Organize later.**
+<p align="center">
+  <strong>A capture layer for visual workspaces.</strong><br />
+  Type on your phone. Send to Miro. Organize on the board later.
+</p>
 
-Live Ideas is a tiny mobile-first capture layer for Miro. Open it, type an idea or observation, tap Send, and a Sticky Note appears on your configured Miro Board. The phone is the pocket sticky note; Miro is the wall.
+---
+
+## How it works
+
+| 01 — Capture | 02 — Send | 03 — Organize |
+| --- | --- | --- |
+| Open Live Ideas and type the thought before it disappears. | Tap once. The server safely sends it to your configured Miro Board. | A Sticky Note appears in Miro. Sort, cluster, discuss, or compose later. |
+
+That is the entire daily workflow.
 
 ```text
 idea appears
@@ -12,24 +27,36 @@ idea appears
 → type
 → Send
 → Miro Sticky
-→ organize later on the desktop
+→ keep moving
 ```
 
-Live Ideas is intentionally **not** a notes app, project manager, or Miro replacement. V1 does one thing: reduce the friction between an idea happening and leaving a reliable trace.
+If sending fails, the original text stays in Capture and can be retried. Live Ideas does not clear the input until the Miro Sticky is confirmed **and** the local sent state is saved.
 
-## What V1 includes
+## Why it exists
 
-- **Capture** — one focused text surface with a single send action.
-- **Reliable delivery** — text is not cleared until Miro creation succeeds and the local sent state is persisted.
-- **Failed → Retry** — network/API failures keep the original text available for retry.
-- **Fragments** — device-local, newest-first history of successfully sent text.
-- **Six-line preview** — long Fragments stay compact while the full text remains stored.
-- **Local delete** — swipe a Fragment left to remove the local history record. This does **not** delete the Miro Sticky.
-- **Direct-manipulation navigation** — Capture ↔ Fragments follows your horizontal drag.
-- **Board-aware placement** — the server reads current Miro Sticky geometry and chooses a free grid position.
-- **Server-side secrets** — the Miro access token is never shipped in browser JavaScript.
+The problem was never “where can I write this down?”
 
-## Architecture
+The problem was the extra work between **capturing something in the moment** and **getting it into the place where it will actually be used later**.
+
+Live Ideas removes that handoff.
+
+> **Capture now. Organize later.**
+
+Your phone is the pocket sticky note. Miro is the wall.
+
+## Made to disappear
+
+Live Ideas is intentionally small. It is not trying to become another notes app.
+
+- No folders, tags, projects, or search in V1.
+- No board organization on the phone.
+- No Miro access token in browser JavaScript.
+- No requirement to classify an idea before capturing it.
+- No cloud account system or cross-device sync in V1.
+
+The Capture surface exists for one job: **leave a reliable trace with as little friction as possible.**
+
+## Capture → Miro
 
 ```text
 Phone / browser
@@ -41,14 +68,48 @@ Phone / browser
        ↓
 Same-origin Worker
 ├─ authorization
-├─ server-side Miro secrets
-└─ Miro client + placement
+├─ server-side Miro credentials
+└─ board-aware Sticky placement
        ↓
-Configured Miro Board
+Miro Board
 └─ Sticky Note
 ```
 
-See [Architecture](./docs/ARCHITECTURE.md) for the detailed boundaries and data flow.
+The Worker reads the current board state and chooses a free grid position so new Stickies do not simply pile on top of each other.
+
+## Fragments
+
+**Fragments** answers one question only:
+
+> What did I successfully send before?
+
+It is a local history, newest first. Long text is visually clamped to six lines while the full text stays stored. Swipe left to delete a local history item; this **does not delete the corresponding Miro Sticky**.
+
+## Use cases
+
+Live Ideas started from personal writing, but the underlying pattern is broader:
+
+- **Ideas / writing** — capture a line before it vanishes.
+- **Exhibitions / trade shows** — leave a quick observation while walking.
+- **Workshops** — capture first, cluster and discuss later.
+- **Field research / store visits** — record observations in the field, analyze back at the desk.
+- **Competitive / CMF research** — send useful fragments directly into the shared visual workspace.
+
+V1 is text-only. The leading V2 direction is **Photo + Comment → Miro**.
+
+## Use it
+
+**Start here if you just want to understand or run the project:**
+
+- [Usage guide →](./docs/USAGE.md)
+- [Setup & deployment →](./docs/SETUP.md)
+- [Architecture →](./docs/ARCHITECTURE.md)
+- [Security model →](./docs/SECURITY.md)
+
+Localized usage guides:
+
+- [简体中文使用教程](./docs/USAGE.zh-CN.md)
+- [日本語の使い方](./docs/USAGE.ja.md)
 
 ## Quick start
 
@@ -66,25 +127,11 @@ npm test
 npm run build
 ```
 
-For full configuration and deployment steps, read [Setup](./docs/SETUP.md).
+For a reproducible public deployment, follow the [Cloudflare Workers self-host guide](./docs/SETUP.md). The maintainer's private dogfood deployment uses ChatGPT Sites, but the open-source project does not depend on that environment.
 
-## Deployment options
+## Self-host security
 
-### ChatGPT Sites
-
-The maintainer's private deployment uses ChatGPT Sites with server-side values:
-
-```text
-MIRO_ACCESS_TOKEN
-MIRO_BOARD_ID
-OWNER_EMAIL
-```
-
-`OWNER_EMAIL` is matched against the Sites-authenticated user email. This path is convenient for private dogfood and does not expose the Miro token to the browser.
-
-### Cloudflare Workers self-host
-
-The open-source self-host path uses Cloudflare Workers with:
+For Cloudflare Workers self-hosting, keep these values on the server:
 
 ```text
 MIRO_ACCESS_TOKEN
@@ -92,47 +139,9 @@ MIRO_BOARD_ID
 SELF_HOST_PASSWORD
 ```
 
-When `SELF_HOST_PASSWORD` is configured, the whole app is protected with HTTP Basic authentication. The username is fixed to:
+When `SELF_HOST_PASSWORD` is configured, the whole app is protected with HTTP Basic authentication. Use HTTPS and a long unique password.
 
-```text
-liveideas
-```
-
-Use a long unique password and HTTPS only. See [Setup](./docs/SETUP.md) and [Security](./docs/SECURITY.md).
-
-## How to use it
-
-Full end-user guides:
-
-- [English usage guide](./docs/USAGE.md)
-- [简体中文使用教程](./docs/USAGE.zh-CN.md)
-- [日本語の使い方](./docs/USAGE.ja.md)
-
-The everyday flow is deliberately short:
-
-1. Open **Capture**.
-2. Type into `Type your idea...`.
-3. Tap Send.
-4. `Sending...` appears while the request is in flight.
-5. On success, `Your idea was sent to Miro` appears briefly and Capture clears.
-6. If sending fails, the text remains and `Failed to send. Tap to retry.` appears with the Retry action.
-
-## Data and privacy
-
-- Current draft and Fragments history live in this browser's `localStorage`.
-- Fragments are device/browser-local; V1 does not provide cross-device sync.
-- Successfully sent Capture text is sent through the same-origin Worker to the configured Miro Board.
-- Local Fragment deletion never deletes the corresponding Miro Sticky.
-- Live Ideas includes no analytics by default.
-- Do not commit real Miro tokens, Board IDs, passwords, `.env`, or `.dev.vars` files.
-
-See [Security](./docs/SECURITY.md) for the complete model.
-
-## V1 scope
-
-V1 is **text capture only**. It deliberately does not include AI, tags, folders, search, projects, multiple destinations, audio, camera/photo capture, native mobile apps, or complex cloud sync.
-
-The leading V2 candidate is **Photo + Comment → Miro** for exhibitions, workshops, store visits, and field research.
+Never commit real tokens, Board IDs, passwords, `.env`, or `.dev.vars` files.
 
 ## Development
 
@@ -143,17 +152,20 @@ npm run build
 npm run preview
 ```
 
-The test suite covers capture reliability, local persistence/migration, Fragments deletion, UI contracts, API authorization, Miro placement, and self-host authorization.
+The test suite covers capture reliability, local persistence and legacy-key migration, Fragments deletion, UI contracts, API authorization, Miro placement, self-host authentication, and secret scanning.
 
 ## Product docs
 
 - [PRD](./docs/PRD.md)
 - [Project outline](./docs/OUTLINE.md)
-- [Setup](./docs/SETUP.md)
-- [Architecture](./docs/ARCHITECTURE.md)
-- [Security](./docs/SECURITY.md)
 - [Real-device acceptance](./docs/DEVICE_ACCEPTANCE.md)
 
 ## License
 
-Live Ideas is released under the [MIT License](./LICENSE).
+MIT — see [LICENSE](./LICENSE).
+
+---
+
+<p align="center">
+  <sub>Live Ideas is an independent open-source project and is not affiliated with Miro.</sub>
+</p>
