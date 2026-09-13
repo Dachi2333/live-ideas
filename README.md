@@ -1,56 +1,78 @@
-# Live Lyrics
+# Live Ideas
 
-Live Lyrics V0 is a deliberately tiny mobile Web App for capturing lyric fragments and sending each successful fragment to one fixed Miro Board as a Sticky Note.
+**English** · [简体中文](./README.zh-CN.md) · [日本語](./README.ja.md)
 
-The locked product flow is:
+> **Capture now. Organize later.**
+
+Live Ideas is a tiny mobile-first capture layer for Miro. Open it, type an idea or observation, tap Send, and a Sticky Note appears on your configured Miro Board. The phone is the pocket sticky note; Miro is the wall.
 
 ```text
-open Live Lyrics
-→ write
-→ ↗
+idea appears
+→ open Live Ideas
+→ type
+→ Send
 → Miro Sticky
+→ organize later on the desktop
 ```
 
-Daily UI contains only **Fragments**, the capture surface, and **↗**.
+Live Ideas is intentionally **not** a notes app, project manager, or Miro replacement. V1 does one thing: reduce the friction between an idea happening and leaving a reliable trace.
 
-## V0 architecture
+## What V1 includes
+
+- **Capture** — one focused text surface with a single send action.
+- **Reliable delivery** — text is not cleared until Miro creation succeeds and the local sent state is persisted.
+- **Failed → Retry** — network/API failures keep the original text available for retry.
+- **Fragments** — device-local, newest-first history of successfully sent text.
+- **Six-line preview** — long Fragments stay compact while the full text remains stored.
+- **Local delete** — swipe a Fragment left to remove the local history record. This does **not** delete the Miro Sticky.
+- **Direct-manipulation navigation** — Capture ↔ Fragments follows your horizontal drag.
+- **Board-aware placement** — the server reads current Miro Sticky geometry and chooses a free grid position.
+- **Server-side secrets** — the Miro access token is never shipped in browser JavaScript.
+
+## Architecture
 
 ```text
-browser
+Phone / browser
 ├─ Capture UI
-├─ localStorage draft + sent history
+├─ localStorage
+│  ├─ current draft
+│  └─ sent Fragments history
 └─ POST /api/fragments
-        ↓
-ChatGPT Sites server runtime
-├─ authenticated-owner check
-├─ hosted runtime values
-└─ Miro REST API
-        ↓
-fixed Miro Board
+       ↓
+Same-origin Worker
+├─ authorization
+├─ server-side Miro secrets
+└─ Miro client + placement
+       ↓
+Configured Miro Board
+└─ Sticky Note
 ```
 
-Miro credentials are never shipped in the browser bundle.
+See [Architecture](./docs/ARCHITECTURE.md) for the detailed boundaries and data flow.
 
-## Local verification
+## Quick start
 
-Requires Node.js 22.13+ (CI uses Node 24).
+Requirements:
+
+- Node.js **22.13+**
+- a Miro app/token with `boards:read` and `boards:write`
+- one target Miro Board
 
 ```bash
-npm install
+git clone https://github.com/Dachi2333/live-ideas.git
+cd live-ideas
+npm ci
 npm test
 npm run build
 ```
 
-The Sites build must contain:
+For full configuration and deployment steps, read [Setup](./docs/SETUP.md).
 
-```text
-dist/server/index.js
-dist/.openai/hosting.json
-```
+## Deployment options
 
-## Runtime values
+### ChatGPT Sites
 
-Only configure these as local environment values or ChatGPT Sites hosted environment values:
+The maintainer's private deployment uses ChatGPT Sites with server-side values:
 
 ```text
 MIRO_ACCESS_TOKEN
@@ -58,12 +80,80 @@ MIRO_BOARD_ID
 OWNER_EMAIL
 ```
 
-Do not commit real values. See `docs/SETUP.md`.
+`OWNER_EMAIL` is matched against the Sites-authenticated user email. This path is convenient for private dogfood and does not expose the Miro token to the browser.
 
-## Source of truth
+### Cloudflare Workers self-host
 
-- `docs/PRD.md` — locked V0 source
-- `docs/OUTLINE.md` — compact project outline
-- `docs/DEVICE_ACCEPTANCE.md` — real-iPhone final gate
+The open-source self-host path uses Cloudflare Workers with:
 
-Drafts-first work is historical prototype work and is not part of the Web App runtime.
+```text
+MIRO_ACCESS_TOKEN
+MIRO_BOARD_ID
+SELF_HOST_PASSWORD
+```
+
+When `SELF_HOST_PASSWORD` is configured, the whole app is protected with HTTP Basic authentication. The username is fixed to:
+
+```text
+liveideas
+```
+
+Use a long unique password and HTTPS only. See [Setup](./docs/SETUP.md) and [Security](./docs/SECURITY.md).
+
+## How to use it
+
+Full end-user guides:
+
+- [English usage guide](./docs/USAGE.md)
+- [简体中文使用教程](./docs/USAGE.zh-CN.md)
+- [日本語の使い方](./docs/USAGE.ja.md)
+
+The everyday flow is deliberately short:
+
+1. Open **Capture**.
+2. Type into `Type your idea...`.
+3. Tap Send.
+4. `Sending...` appears while the request is in flight.
+5. On success, `Your idea was sent to Miro` appears briefly and Capture clears.
+6. If sending fails, the text remains and `Failed to send. Tap to retry.` appears with the Retry action.
+
+## Data and privacy
+
+- Current draft and Fragments history live in this browser's `localStorage`.
+- Fragments are device/browser-local; V1 does not provide cross-device sync.
+- Successfully sent Capture text is sent through the same-origin Worker to the configured Miro Board.
+- Local Fragment deletion never deletes the corresponding Miro Sticky.
+- Live Ideas includes no analytics by default.
+- Do not commit real Miro tokens, Board IDs, passwords, `.env`, or `.dev.vars` files.
+
+See [Security](./docs/SECURITY.md) for the complete model.
+
+## V1 scope
+
+V1 is **text capture only**. It deliberately does not include AI, tags, folders, search, projects, multiple destinations, audio, camera/photo capture, native mobile apps, or complex cloud sync.
+
+The leading V2 candidate is **Photo + Comment → Miro** for exhibitions, workshops, store visits, and field research.
+
+## Development
+
+```bash
+npm run dev
+npm test
+npm run build
+npm run preview
+```
+
+The test suite covers capture reliability, local persistence/migration, Fragments deletion, UI contracts, API authorization, Miro placement, and self-host authorization.
+
+## Product docs
+
+- [PRD](./docs/PRD.md)
+- [Project outline](./docs/OUTLINE.md)
+- [Setup](./docs/SETUP.md)
+- [Architecture](./docs/ARCHITECTURE.md)
+- [Security](./docs/SECURITY.md)
+- [Real-device acceptance](./docs/DEVICE_ACCEPTANCE.md)
+
+## License
+
+A license will be added before the repository is made public. The release gate requires an explicit maintainer choice rather than silently assigning one.
