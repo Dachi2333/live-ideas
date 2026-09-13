@@ -46,7 +46,7 @@ npm run build
 
 ## Docs
 
-[Architecture](./docs/ARCHITECTURE.md) · [Security](./docs/SECURITY.md) · [PRD](./docs/PRD.md) · [プロジェクト概要](./docs/OUTLINE.md)
+[Architecture](./docs/ARCHITECTURE.md) · [Security](./docs/SECURITY.md)
 
 ## License
 
