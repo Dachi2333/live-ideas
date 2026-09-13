@@ -40,6 +40,9 @@ export function createCaptureViewModel({ persistence, store, remote, makeId, now
     listSent() {
       return store.listSent();
     },
+    deleteSent(id) {
+      return store.remove(id);
+    },
     async send() {
       if (sending) {
         return { ok: false, clearInput: false, error: "send_in_progress", fragment: null };
