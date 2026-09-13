@@ -84,6 +84,17 @@ test("sent fragments are exposed newest first", async () => {
   assert.deepEqual(vm.listSent().map((f) => f.text), ["second", "first"]);
 });
 
+test("deleteSent removes only local history", async () => {
+  const { vm } = setup({ createSticky: async () => ({ ok: true, itemId: "sticky" }) });
+  vm.setText("first");
+  await vm.send();
+  vm.setText("second");
+  await vm.send();
+  const second = vm.listSent()[0];
+  assert.equal(vm.deleteSent(second.id), true);
+  assert.deepEqual(vm.listSent().map((f) => f.text), ["first"]);
+});
+
 test("local capture persistence failure keeps in-memory text and reports failure without sending", async () => {
   let calls = 0;
   const persistence = {
