@@ -3,11 +3,17 @@ import assert from "node:assert/strict";
 import { authorizeOwner, handleCreateFragment } from "../../worker/api.js";
 
 function request(body, email = "dachi@example.com", extraHeaders = {}) {
+  const headers = { "content-type": "application/json", ...extraHeaders };
+  if (email != null) headers["oai-authenticated-user-email"] = email;
   return new Request("https://example.test/api/fragments", {
     method: "POST",
-    headers: { "content-type": "application/json", "oai-authenticated-user-email": email, ...extraHeaders },
+    headers,
     body: JSON.stringify(body),
   });
+}
+
+function basic(password, username = "liveideas") {
+  return `Basic ${Buffer.from(`${username}:${password}`).toString("base64")}`;
 }
 
 test("owner authorization is case-insensitive and denies missing/mismatched identity", () => {
@@ -65,4 +71,32 @@ test("API preserves Miro 429 status without exposing upstream content", async ()
   });
   assert.equal(response.status, 429);
   assert.deepEqual(await response.json(), { ok: false, error: "miro_create_failed" });
+});
+
+test("self-host mode accepts Basic auth without ChatGPT Sites owner email", async () => {
+  const env = { SELF_HOST_PASSWORD: "correct horse", MIRO_ACCESS_TOKEN: "secret", MIRO_BOARD_ID: "board" };
+  const response = await handleCreateFragment(
+    request({ text: "self hosted", position: { x: 0, y: 0 } }, null, { authorization: basic("correct horse") }),
+    env,
+    { createClient: () => ({ createSticky: async () => ({ ok: true, itemId: "sticky-self" }) }) },
+  );
+  assert.equal(response.status, 201);
+  assert.deepEqual(await response.json(), { ok: true, itemId: "sticky-self" });
+});
+
+test("self-host mode rejects missing or wrong Basic credentials before Miro", async () => {
+  let calls = 0;
+  const env = { SELF_HOST_PASSWORD: "correct horse", MIRO_ACCESS_TOKEN: "secret", MIRO_BOARD_ID: "board" };
+  const deps = { createClient: () => { calls++; return {}; } };
+
+  const missing = await handleCreateFragment(request({ text: "x", position: { x: 0, y: 0 } }, null), env, deps);
+  const wrong = await handleCreateFragment(
+    request({ text: "x", position: { x: 0, y: 0 } }, null, { authorization: basic("wrong") }),
+    env,
+    deps,
+  );
+
+  assert.equal(missing.status, 401);
+  assert.equal(wrong.status, 401);
+  assert.equal(calls, 0);
 });
