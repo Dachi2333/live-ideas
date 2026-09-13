@@ -1,165 +1,116 @@
-# Live Lyrics — 项目大纲 v3
+# Live Ideas — 项目大纲 v4
 
-## 一句话
-
-一个只干一件事的 Web App：
-
-> **打开 Live Lyrics，写下一句歌词，点一下发送，它就自动出现在固定 Miro Board 里成为一张便利贴。**
-
-优先部署：
-
-> **ChatGPT Sites**
+**Date:** 2026-09-11  
+**Current target:** Text Capture V1 → Open Source → Dogfood → Photo Capture V2  
+**UI source of truth:** Figma
 
 ---
 
-# 为什么现在改成 Web App
+# 一句话
 
-我们已经走过两条路线：
-
-```text
-Drafts
-↓
-自定义 Action 需要 Pro
-```
-
-然后：
-
-```text
-原生 iOS App
-↓
-最终需要 Mac / Xcode / signing 环境
-```
-
-V0 真正要验证的其实不是：
-
-> “我们会不会做一个 iOS App？”
-
-而是：
-
-> **这个 Capture 工作流到底会不会真的进入日常。**
-
-所以现在正式锁成：
-
-```text
-Web App
-↓
-ChatGPT Sites
-↓
-iPhone Safari / Home Screen
-```
-
-这样：
-
-```text
-不需要 Drafts Pro
-不需要 Mac
-不需要 Xcode
-不需要 Apple Developer
-```
-
-先把产品本身跑起来。
-
----
-
-# 为什么做
+> **Live Ideas 是一个把“现场想到的东西”直接送进 Miro 的低摩擦 Capture 入口。**
 
 现在：
 
 ```text
+打开 Live Ideas
+↓
+写一句 idea / observation
+↓
+Send
+↓
+Miro Sticky
+```
+
+核心不是“记笔记”。
+
+核心是：
+
+> **Capture now. Organize later.**
+
+---
+
+# 为什么从 Live Lyrics 改成 Live Ideas
+
+最初问题来自歌词：
+
+```text
 想到一句
 ↓
-Apple Notes
+Notes
 ↓
-以后找出来
+以后再找
 ↓
-复制
-↓
-Miro
-↓
-粘贴
+复制到 Miro
 ```
 
-真正的问题：
+但真正的问题并不是歌词。
 
-> **Capture 和整理绑在了一起。**
-
-Live Lyrics 把它们拆开。
-
----
-
-# 正确流程
+同一个断裂也发生在：
 
 ```text
-现在
-打开 Live Lyrics
-↓
-写
-↓
-↗
-↓
-结束
+展会
+Workshop
+Field Research
+竞品观察
+CMF 调研
+会议
+街头 / 店铺观察
+个人创作
 ```
 
-晚上：
+共同问题：
+
+> **现场负责 Capture，却被迫同时做整理和搬运。**
+
+所以产品正式变成：
 
 ```text
-打开 Miro
-↓
-白天的 fragment 已经在墙上
-↓
-拖
-拼
-删
-改
-↓
-Compose
+Live Ideas
 ```
 
 ---
 
-# 手机上长这样
+# 核心原则
+
+> **不要让整理行为杀死想法发生本身。**
+
+> **Capture 负责留下，Organize / Compose 才负责决定意义。**
+
+> **iPhone 是口袋里的便利贴，Miro 是墙。**
+
+---
+
+# V1 做什么
+
+只做 Text Capture。
 
 ```text
-┌──────────────────────────┐
-│ Fragments                │
-│                          │
-│                          │
-│  type something...       │
-│                          │
-│                          │
-│                    ↗     │
-└──────────────────────────┘
-```
-
-日常只有：
-
-```text
+Capture
+↕
 Fragments
-↗
 ```
 
-没有第三个。
-
----
-
-# ↗ 做什么
+发送链路：
 
 ```text
 当前文字
 ↓
-保存 Draft 状态
+本地安全保存
 ↓
 Sending
 ↓
-server-side secure proxy
+server-side API
 ↓
 Miro API
 ↓
-固定 Lyrics Board
+固定 Board
 ↓
 Sticky Note
 ↓
 本地标记 Sent
+↓
+Success feedback
 ↓
 清空 Capture
 ```
@@ -176,7 +127,7 @@ Retry
 
 绝对规则：
 
-> **没有确认远端成功 + 本地 Sent 持久化，不清空原文。**
+> **Miro 成功 + 本地 Sent 持久化之前，绝不清空原文。**
 
 ---
 
@@ -184,293 +135,504 @@ Retry
 
 只是：
 
-> **我以前成功扔出去过什么？**
+> **“我以前成功送出去过什么？”**
+
+V1：
 
 ```text
-我不想死后没人记得我
-Today 17:42
+newest-first
+文本
+时间
+超长文本折叠
+删除本地记录
+```
 
-我的真实是真的真实吗
-Today 16:18
+删除本地 Fragments：
+
+```text
+只删除本机历史
+≠
+删除 Miro Sticky
+```
+
+Fragments 不是：
+
+```text
+Notes
+Project Manager
+Tag System
+Compose Tool
+Miro Remote Control
+```
+
+---
+
+# UI 从现在开始怎么做
+
+## Figma = Source of Truth
+
+不再：
+
+```text
+看截图
+↓
+实现侧猜尺寸 / 猜颜色 / 猜 icon
+↓
+不断来回调
+```
+
+改成：
+
+```text
+Figma 定稿
+↓
+开发读取真实尺寸 / 色值 / vector / motion
+↓
+高保真实现
+↓
+真机验收
+```
+
+Figma 需要锁定：
+
+```text
+两个黑色
+橙色
+Logo / Live Ideas wordmark
+字号 / 字重
+Capture / Fragments 尺寸与位置
+是否使用 icon
+Send / Retry vector
+placeholder
+Success feedback
+Fragments delete UI
+long text clamp / expand
+active indicator
+swipe motion
+```
+
+正式 UI 不保留：
+
+```text
+Ready
+Typing…
+未经设计确认的大橙色框
+字符箭头 / 字符 Retry
+松手以后才开始的 swipe
+```
+
+---
+
+# Swipe 必须是真的跟手
+
+目标：
+
+```text
+手指拖 20%
+↓
+页面移动 20%
+↓
+indicator 同步移动
+```
+
+松手：
+
+```text
+距离 / 速度够
+→ 完成切页
+
+距离 / 速度不够
+→ 回弹
 ```
 
 不是：
 
 ```text
-Notes
-Song Manager
-Tag System
-Project System
+touchend
+↓
+才开始播放动画
 ```
+
+点击 Capture / Fragments 也必须可以正常切换。
 
 ---
 
-# Miro 是什么
-
-真正的创作墙。
+# 当前实现仕組み
 
 ```text
-Live Lyrics
-↓
-Miro Sticky
-↓
-以后拖拽组合
-```
-
-Live Lyrics 不负责 Compose。
-
----
-
-# 部署
-
-V0 优先：
-
-```text
-GitHub
-↓
-ChatGPT Sites
-↓
-iPhone
-```
-
-iPhone 可以：
-
-```text
-Safari 打开
-```
-
-并优先测试：
-
-```text
-添加到主屏幕
-↓
-像独立 Web App 一样使用
-```
-
----
-
-# ChatGPT Sites Gate
-
-正式接 Miro 前先确认：
-
-```text
-Sites 能跑 Web App UI？
-Sites 能安全保存 secret？
-Sites 能 server-side 调 Miro？
-iPhone 打开体验 OK？
-Home Screen 体验 OK？
-刷新 / 后台不会丢草稿？
-```
-
-其中最重要的是：
-
-```text
-secret
-server-side Miro request
-```
-
-如果不支持：
-
-> **STOP。**
-
-不能为了省事把 Miro token 放前端。
-
-部署层可以换，但产品架构不需要重做。
-
----
-
-# 技术结构
-
-```text
-Live Lyrics Web App
-      │
-      ├── Capture UI
-      ├── Fragment Core
-      ├── Local Persistence
-      ├── Fragments
-      └── Secure API
-             ↓
-          Miro API
-             ↓
-          Sticky
-```
-
-技术方向：
-
-```text
-JavaScript / TypeScript
-HTML / CSS
-Browser Storage
-Server-side API / Proxy
-ChatGPT Sites
-```
-
-保持轻量。
-
----
-
-# 之前做过的东西不是白做
-
-继续复用：
-
-```text
-Fragment model
-
-draft
-↓
-sending
-├─ sent
-└─ failed
-
-失败保词
-Retry
-防重复
-Miro adapter 行为
-网格定位
-Fragments newest-first
-核心测试语义
-```
-
-扔掉：
-
-```text
-Drafts Action
-Drafts FileManager
-Drafts Credential
-Drafts HTMLPreview
-```
-
-也不迁 Swift。
-
----
-
-# GitHub
-
-继续用原来的：
-
-```text
-Dachi2333/live-ideas
-```
-
-不新建 repo。
-
-正确做法：
-
-```text
-main
+iPhone / Browser
 │
-├─ old Drafts branch
-│   └─ superseded
+├─ Capture UI
+├─ localStorage
+│   ├─ 当前 Draft
+│   └─ Fragments history
 │
-└─ new Web App branch
-    └─ 正式 V0
-```
-
-旧 Draft PR：
-
-```text
-保留历史
-不合并
-```
-
-Web App 稳定后：
-
-```text
-可以删旧 Drafts branch
-```
-
-main 不留 Drafts runtime。
-
----
-
-# V0 不做
-
-```text
-AI
-Tag
-Folder
-Song
-Verse / Hook
-搜索
-录音
-Melody
-语音转文字
-图片
-多个 Board
-Android
-原生 iOS
-Widget
-Lock Screen Control
-Control Center
-Action Button
-协作
-社交
-复杂同步
-```
-
-一句话：
-
-> **V0 只负责把一句文字贴到墙上。**
-
----
-
-# 权限 / 安全
-
-需要：
-
-```text
-网络
-浏览器本地存储
-Miro write
-server-side secret
-```
-
-不需要：
-
-```text
-麦克风
-相机
-照片
-定位
-通讯录
-Apple Notes
-iOS native permission
+└─ POST /api/fragments
+        ↓
+Server runtime
+│
+├─ owner / auth gate
+├─ server-side Miro secret
+└─ Miro client
+        ↓
+Miro Board
+│
+├─ 读取当前 Sticky
+├─ 处理 Frame / Canvas 坐标
+├─ 几何碰撞判断
+├─ 找空位
+└─ Create Sticky
 ```
 
 最重要：
 
 ```text
 Miro Token
+绝对不进浏览器
 绝对不进 GitHub
-绝对不进前端 bundle
 ```
+
+位置现在由 server 根据真实 Board 状态决定。
+
+V1 clean-up：
+
+```text
+删除客户端残留 position contract
+统一 server-side positioning
+保留 overlap / frame regression tests
+```
+
+---
+
+# Live Lyrics → Live Ideas 全局改名
+
+需要改：
+
+```text
+UI
+PWA metadata
+README
+PRD / Outline
+Docs
+Tests
+Deployment copy
+App name
+```
+
+但 localStorage 不能粗暴重命名。
+
+必须：
+
+```text
+检测 live-lyrics:*
+↓
+迁移到 live-ideas:*
+↓
+确认成功
+↓
+继续使用新 key
+```
+
+不能因为换名字让旧 Draft / Fragments 消失。
+
+---
+
+# 第一版开源
+
+完成顺序：
+
+```text
+Figma UI
+↓
+高保真实现
+↓
+全局 Live Ideas rename
+↓
+V1 clean-up
+↓
+真机 acceptance
+↓
+README / Setup / Use Guide
+↓
+Open Source
+↓
+Deploy
+```
+
+公开 repo：
+
+```text
+Dachi2333/live-ideas
+```
+
+第一版公开需要：
+
+```text
+README
+Demo GIF / 截图
+Architecture
+Local setup
+Miro setup
+Environment variables
+Deploy guide
+Home Screen guide
+Security notes
+Tests
+LICENSE（发布前决定）
+```
+
+公开版不能依赖 Dachi 自己的 ChatGPT Sites owner 配置。
+
+需要至少一种可复现 self-host 方式。
+
+OAuth + Board Picker：
+
+```text
+Future setup improvement
+不是第一版开源 blocker
+```
+
+---
+
+# V1 不做
+
+```text
+AI
+Tag
+Folder
+Project
+Search
+图片
+Camera
+相册
+录音
+语音转文字
+多个 Board
+复杂同步
+原生 iOS
+Android native
+Widget
+Lock Screen
+Control Center
+Action Button
+```
+
+一句话：
+
+> **V1 只负责把一段文字可靠地扔到墙上。**
+
+---
+
+# 应用场景
+
+## Personal Idea / Writing
+
+```text
+想到一句
+↓
+Live Ideas
+↓
+Miro
+↓
+以后再组织
+```
+
+## Exhibition / Trade Show
+
+V1：
+
+```text
+看到一个设计
+↓
+马上写 keyword / observation
+↓
+Miro
+```
+
+V2：
+
+```text
+拍图
+↓
+comment
+↓
+Miro：图片 + Sticky
+```
+
+## Workshop
+
+```text
+现场只 Capture
+↓
+结束以后在 Miro 聚类 / 讨论
+```
+
+## Field Research / Store Visit / Competitive Research
+
+```text
+现场留下 observation
+↓
+回公司再分析 / grouping / report
+```
+
+---
+
+# V2 第一优先级：Photo + Comment
+
+目标场景：
+
+```text
+展会现场
+↓
+拍一张
+↓
+写 comment
+↓
+Send
+↓
+Miro 里图片和 comment 已经配好
+```
+
+解决的不是“上传图片”。
+
+解决的是：
+
+```text
+拍很多照片
+↓
+回公司
+↓
+传照片
+↓
+找图
+↓
+Miro upload
+↓
+重新写 comment
+↓
+重新配对
+```
+
+这一整段重复劳动。
+
+V2 研究项：
+
+```text
+Camera / Photo Library
+图片压缩 / 格式
+弱网
+Upload progress
+Retry
+图片成功、comment 失败的一致性
+图片 + Sticky 布局
+Frame 是否作为 capture group
+pending queue
+privacy
+```
+
+**V2 不提前塞进 V1。**
 
 ---
 
 # 真机测试
 
-必须实际拿 iPhone 测：
+必须拿真实 iPhone 测：
 
 ```text
 Safari
 Home Screen
 键盘
-中文
-日文
-英文
-emoji
+中文 / 日文 / 英文 / emoji
 多行
+长文本
+Fragments clamp
 刷新
 切后台
-断网
-弱网
-Miro 失败
+断网 / 弱网
+Miro failure
 Retry
 Repeated Tap
-Fragments
+Success feedback
+Fragments delete
+左右 drag 跟手
+indicator 跟手
+drag cancel / complete
 真实 Sticky
 失败保词
 成功清空
+旧 localStorage migration
+```
+
+---
+
+# 社内汇报
+
+不要先讲技术。
+
+建议：
+
+```text
+01 Problem
+   Capture → Organize 的断裂
+
+02 Existing workflow
+   为什么现在麻烦
+
+03 Live Ideas
+   Capture now. Organize later.
+
+04 Demo
+   手机一句 → Miro Sticky
+
+05 Why Miro
+   不重新造知识库，只做入口
+
+06 Use Cases
+   Exhibition / Workshop / Research / Personal
+
+07 Future
+   Photo + Comment → Miro
+
+08 Discussion
+   哪个场景最值得团队 dogfood？
+```
+
+汇报目的：
+
+```text
+验证问题
+验证场景
+验证 dogfood 意愿
+决定 Photo V2 是否值得做
+```
+
+不是第一次就要求公司正式 adoption。
+
+---
+
+# Roadmap
+
+```text
+NOW
+Figma UI
+↓
+V1 exact implementation
+↓
+Live Ideas global rename + migration
+↓
+V1 clean-up
+↓
+iPhone acceptance
+↓
+Open Source + Deploy + Guide
+↓
+Dogfood
+↓
+Internal presentation / feedback
+↓
+V2 Photo + Comment
+↓
+Later: Audio / system-level capture
 ```
 
 ---
@@ -484,115 +646,37 @@ Fragments
 而是：
 
 ```text
+看到 / 想到
+↓
 掏手机
 ↓
-Live Lyrics
+Live Ideas
 ↓
-写
+Capture
 ↓
-↗
+Send
 ↓
-锁屏
+继续做原来的事
 ```
 
-以及晚上：
+之后：
 
 ```text
 打开 Miro
 ↓
-都已经在那里
+已经在那里
 ```
 
 ---
 
-# Future 1 — 原生 iOS
+# 产品哲学
 
-只有 Web App 真的好用以后才考虑。
+> **不要让整理行为杀死想法发生本身。**
 
-原生 App 未来主要为了：
+> **Capture 负责留下，Organize / Compose 才负责决定意义。**
 
-```text
-Widget
-Lock Screen Control
-Control Center
-Action Button
-更强的系统级入口
-```
-
-不是为了重新发明 Capture。
-
----
-
-# Future 2 — Melody Fragment
-
-未来：
-
-```text
-突然想到旋律
-↓
-系统入口
-↓
-直接录音
-↓
-Melody Fragment
-```
-
-不默认转文字。
-
----
-
-# Future 3 — Song
-
-```text
-Text Fragment ───┐
-                 ├──→ Song
-Melody Fragment ─┘
-```
-
-Song 属于 Compose。
-
-不进入 V0。
-
----
-
-# 产品原则
-
-> **不要让整理行为杀死灵感发生本身。**
-
-> **Capture 负责留下，Compose 负责决定意义。**
-
-> **语言来了，就留下文字；旋律来了，就留下声音。**
+> **现场不负责整理自己。**
 
 > **iPhone 是口袋里的便利贴，Miro 是墙。**
 
----
-
-# V0 LOCK
-
-最终：
-
-```text
-Fragments                              ↗
-```
-
-链路：
-
-```text
-打开 Live Lyrics Web App
-↓
-写一句
-↓
-↗
-↓
-Miro Sticky
-```
-
-**Web App。**
-
-**ChatGPT Sites 优先部署。**
-
-**不依赖 Drafts。**
-
-**不依赖原生 iOS。**
-
-**不加任何东西。**
+> **这个工具的价值不是管理更多内容，而是让一个想法更容易活下来。**
