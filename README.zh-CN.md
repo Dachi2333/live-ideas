@@ -161,4 +161,4 @@ npm run preview
 
 ## License
 
-仓库正式 Public 前会加入开源许可证。许可证类型由维护者在最终 Release Gate 明确选择，不会自动替他决定。
+Live Ideas 采用 [MIT License](./LICENSE) 开源。
