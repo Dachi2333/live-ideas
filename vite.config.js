@@ -14,7 +14,7 @@ export default defineConfig(async () => {
       copySitesWorker(),
       cloudflare({
         config: {
-          name: "live-lyrics",
+          name: "live-ideas",
           main: "./worker/index.js",
           compatibility_date: "2026-09-01",
           assets: {
