@@ -3,7 +3,7 @@
   "short_name": "Live Ideas",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#191b1a",
-  "theme_color": "#191b1a",
+  "background_color": "#202222",
+  "theme_color": "#202222",
   "description": "Low-friction idea fragment capture."
 }
