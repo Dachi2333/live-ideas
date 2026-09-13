@@ -392,8 +392,7 @@ button { -webkit-tap-highlight-color: transparent; }
 .fragments-tab { left: 222px; width: 84px; }
 .app-tab.is-active { color: var(--color-accent); }
 
-button:focus-visible,
-textarea:focus-visible {
+button:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 3px;
 }
