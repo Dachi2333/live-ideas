@@ -46,7 +46,7 @@ For self-hosting, follow [Setup & deployment](./docs/SETUP.md). Miro credentials
 
 ## Docs
 
-[Architecture](./docs/ARCHITECTURE.md) · [Security](./docs/SECURITY.md) · [PRD](./docs/PRD.md) · [Project outline](./docs/OUTLINE.md)
+[Architecture](./docs/ARCHITECTURE.md) · [Security](./docs/SECURITY.md)
 
 ## License
 
