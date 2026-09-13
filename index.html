@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#191b1a" />
+  <meta name="theme-color" content="#202222" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Live Ideas" />
@@ -19,13 +19,14 @@
     <div id="content-area" class="content-area">
       <section id="capture-view" class="app-view capture-view" aria-label="Capture" aria-hidden="false">
         <div class="capture-card">
-          <textarea id="capture-input" class="capture-input" aria-label="Idea fragment" placeholder="Type what you hear..." autofocus spellcheck="false"></textarea>
+          <textarea id="capture-input" class="capture-input" aria-label="Idea fragment" placeholder="Type your idea..." autofocus spellcheck="false"></textarea>
           <div id="capture-status" class="capture-status" aria-live="polite"></div>
           <button id="send-button" class="send-action" type="button" aria-label="Send fragment">
             <svg class="send-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path class="send-shape" d="M5.25 12h12.4M13.35 7.7 17.65 12l-4.3 4.3" />
+              <path class="send-shape" d="M5 12h12.3M13.2 7.6l4.3 4.4-4.3 4.4" />
             </svg>
           </button>
+          <div id="capture-toast" class="capture-toast" role="status" aria-live="polite">Your idea was sent to Miro</div>
         </div>
       </section>
 
@@ -36,8 +37,8 @@
 
     <nav id="app-tabs" class="app-tabs" data-active="capture" aria-label="Sections">
       <div id="tab-indicator" class="tab-indicator" aria-hidden="true"></div>
-      <button id="capture-tab" class="app-tab is-active" type="button" aria-selected="true">Capture</button>
-      <button id="fragments-tab" class="app-tab" type="button" aria-selected="false">Fragments</button>
+      <button id="capture-tab" class="app-tab capture-tab is-active" type="button" aria-selected="true">Capture</button>
+      <button id="fragments-tab" class="app-tab fragments-tab" type="button" aria-selected="false">Fragments</button>
     </nav>
   </main>
   <script type="module" src="/src/client/app.js"></script>
