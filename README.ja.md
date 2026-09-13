@@ -161,4 +161,4 @@ npm run preview
 
 ## License
 
-リポジトリを Public にする前に、オープンソースライセンスを追加します。ライセンスはメンテナーが最終 Release Gate で明示的に選択します。
+Live Ideas は [MIT License](./LICENSE) のもとで公開されています。
