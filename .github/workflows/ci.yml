@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - feat/webapp-v0
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run tests
+        run: npm test
+      - name: Build ChatGPT Sites artifact
+        run: npm run build
+      - name: Verify build artifacts
+        run: |
+          test -f dist/server/index.js
+          test -f dist/.openai/hosting.json
+          test -f dist/live_ideas/wrangler.json
+      - name: Check tracked source for populated secrets
+        run: |
+          hits="$(git grep -nE 'MIRO_ACCESS_TOKEN=[^[:space:]]+|MIRO_CLIENT_SECRET=[^[:space:]]+|MIRO_BOARD_ID=[^[:space:]]+|SELF_HOST_PASSWORD=[^[:space:]]+|Bearer [A-Za-z0-9._-]{20,}' -- ':!.github/workflows/ci.yml' ':!docs/superpowers/**' || true)"
+          hits="$(printf '%s\n' "$hits" | grep -Ev '=(your-real-token|your-real-board-id|a-long-unique-password)([^[:alnum:]_-]|$)' || true)"
+          if [ -n "$hits" ]; then
+            printf '%s\n' "$hits"
+            echo 'Potential committed credential found.'
+            exit 1
+          fi
+      - name: Check full Git history for populated secrets
+        run: |
+          hits="$(git log -p --all --no-color -- . ':!.github/workflows/ci.yml' ':!docs/superpowers/**' | \
+            grep -E '^[+-].*(MIRO_ACCESS_TOKEN=[^[:space:]]+|MIRO_CLIENT_SECRET=[^[:space:]]+|MIRO_BOARD_ID=[^[:space:]]+|SELF_HOST_PASSWORD=[^[:space:]]+|Bearer [A-Za-z0-9._-]{20,})' || true)"
+          hits="$(printf '%s\n' "$hits" | grep -Ev '=(your-real-token|your-real-board-id|a-long-unique-password)([^[:alnum:]_-]|$)' || true)"
+          if [ -n "$hits" ]; then
+            printf '%s\n' "$hits"
+            echo 'Potential credential found in Git history.'
+            exit 1
+          fi

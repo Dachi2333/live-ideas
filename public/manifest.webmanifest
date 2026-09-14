@@ -1,0 +1,9 @@
+{
+  "name": "Live Ideas",
+  "short_name": "Live Ideas",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#202222",
+  "theme_color": "#202222",
+  "description": "Low-friction idea fragment capture."
+}
