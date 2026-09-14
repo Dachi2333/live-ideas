@@ -1,69 +1,57 @@
-# Live Lyrics
+![Live Ideas — type on your phone, send to Miro](./docs/assets/readme/hero.png)
 
-Live Lyrics V0 is a deliberately tiny mobile Web App for capturing lyric fragments and sending each successful fragment to one fixed Miro Board as a Sticky Note.
+<p align="center">
+  <strong>English</strong> · <a href="./README.zh-CN.md">简体中文</a> · <a href="./README.ja.md">日本語</a>
+</p>
 
-The locked product flow is:
+# Live Ideas
 
-```text
-open Live Lyrics
-→ write
-→ ↗
-→ Miro Sticky
-```
+**Send text from your phone directly to a Miro board.**
 
-Daily UI contains only **Fragments**, the capture surface, and **↗**.
+## How it works
 
-## V0 architecture
+**01 — Type**  
+Open Live Ideas and write your idea.
 
-```text
-browser
-├─ Capture UI
-├─ localStorage draft + sent history
-└─ POST /api/fragments
-        ↓
-ChatGPT Sites server runtime
-├─ authenticated-owner check
-├─ hosted runtime values
-└─ Miro REST API
-        ↓
-fixed Miro Board
-```
+**02 — Send**  
+Tap Send.
 
-Miro credentials are never shipped in the browser bundle.
+**03 — Miro**  
+The text appears as a Sticky Note on your configured Miro board.
 
-## Local verification
+That's it.
 
-Requires Node.js 22.13+ (CI uses Node 24).
+If sending fails, the original text stays in Capture so you can retry. **Fragments** keeps a local history of successfully sent text on the current device.
+
+## Use it
+
+- [Usage guide](./docs/USAGE.md)
+- [简体中文使用教程](./docs/USAGE.zh-CN.md)
+- [日本語の使い方](./docs/USAGE.ja.md)
+- [Setup & deployment](./docs/SETUP.md)
+
+## Quick start
+
+Requirements: Node.js **22.13+**, a Miro token with `boards:read` and `boards:write`, and one target Miro board.
 
 ```bash
-npm install
+git clone https://github.com/Dachi2333/live-ideas.git
+cd live-ideas
+npm ci
 npm test
 npm run build
 ```
 
-The Sites build must contain:
+For self-hosting, follow [Setup & deployment](./docs/SETUP.md). Miro credentials stay on the server and are never shipped in browser JavaScript.
 
-```text
-dist/server/index.js
-dist/.openai/hosting.json
-```
+## Docs
 
-## Runtime values
+[Architecture](./docs/ARCHITECTURE.md) · [Security](./docs/SECURITY.md)
 
-Only configure these as local environment values or ChatGPT Sites hosted environment values:
+## License
 
-```text
-MIRO_ACCESS_TOKEN
-MIRO_BOARD_ID
-OWNER_EMAIL
-```
+MIT — see [LICENSE](./LICENSE).
 
-Do not commit real values. See `docs/SETUP.md`.
+---
 
-## Source of truth
-
-- `docs/PRD.md` — locked V0 source
-- `docs/OUTLINE.md` — compact project outline
-- `docs/DEVICE_ACCEPTANCE.md` — real-iPhone final gate
-
-Drafts-first work is historical prototype work and is not part of the Web App runtime.
+<sub>Live Ideas is an independent open-source project and is not affiliated with Miro.</sub>

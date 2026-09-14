@@ -7,8 +7,11 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "dev": "vite dev",
     "test": "node --test",
     "build": "vite build",
+    "preview": "npm run build && vite preview",
+    "deploy:cloudflare": "npm run build && wrangler deploy",
     "check": "npm test && npm run build"
   },
   "devDependencies": {

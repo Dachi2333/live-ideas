@@ -36,6 +36,16 @@ test("autofocused capture textarea does not render a giant accent focus outline"
   assert.match(css, /button:focus-visible\s*\{/);
 });
 
+test("repository release identity is Live Ideas rather than the legacy Live Lyrics name", async () => {
+  const agents = await readFile(new URL("../../AGENTS.md", import.meta.url), "utf8");
+  const vite = await readFile(new URL("../../vite.config.js", import.meta.url), "utf8");
+  const wrangler = await readFile(new URL("../../wrangler.jsonc", import.meta.url), "utf8");
+  assert.doesNotMatch(agents, /Current product working name:\s*\*\*Live Lyrics\*\*/);
+  assert.match(agents, /Current product working name:\s*\*\*Live Ideas\*\*/);
+  assert.match(vite, /cloudflare\(\)/);
+  assert.match(wrangler, /"name"\s*:\s*"live-ideas"/);
+});
+
 test("Capture and Fragments use direct-manipulation page swiping", async () => {
   const css = await readFile(new URL("../../src/client/styles.css", import.meta.url), "utf8");
   const app = await readFile(new URL("../../src/client/app.js", import.meta.url), "utf8");

@@ -13,8 +13,8 @@ async function exists(path) {
 
 export async function findSitesWorkerBuild(root) {
   const candidates = [
-    resolve(root, "dist", "live_lyrics", "index.js"),
-    resolve(root, "dist", "live-lyrics", "index.js"),
+    resolve(root, "dist", "live_ideas", "index.js"),
+    resolve(root, "dist", "live-ideas", "index.js"),
   ];
 
   for (const candidate of candidates) {
