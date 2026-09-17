@@ -171,3 +171,141 @@ test("Miro client sanitizes thrown network errors", async () => {
   const result = await client.createSticky({ text: "x", position: { x: 0, y: 0 } });
   assert.deepEqual(result, { ok: false, error: "miro_request_failed" });
 });
+
+test("Miro client reuses the unique Live Ideas origin tag", async () => {
+  const seen = [];
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board/a b",
+    fetchImpl: async (url, init = {}) => {
+      seen.push({ url, init });
+      return new Response(JSON.stringify({
+        data: [
+          { id: "tag-other", title: "other" },
+          { id: "tag-origin", title: "live-ideas-origin" },
+        ],
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    },
+  });
+
+  const result = await client.ensureOriginTag();
+
+  assert.deepEqual(result, { ok: true, tagId: "tag-origin" });
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].url, "https://api.miro.com/v2/boards/board%2Fa%20b/tags?limit=50&offset=0");
+  assert.equal(seen[0].init.method, "GET");
+});
+
+test("Miro client creates origin tag when absent", async () => {
+  const seen = [];
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board",
+    fetchImpl: async (url, init = {}) => {
+      seen.push({ url, init });
+      if ((init.method ?? "GET") === "GET") {
+        return new Response(JSON.stringify({ data: [] }), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return new Response(JSON.stringify({ id: "tag-created", title: "live-ideas-origin" }), {
+        status: 201,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  const result = await client.ensureOriginTag();
+
+  assert.deepEqual(result, { ok: true, tagId: "tag-created" });
+  assert.equal(seen.length, 2);
+  assert.equal(seen[1].url, "https://api.miro.com/v2/boards/board/tags");
+  assert.equal(seen[1].init.method, "POST");
+  assert.deepEqual(JSON.parse(seen[1].init.body), { title: "live-ideas-origin" });
+});
+
+test("Miro client follows offset pagination while resolving origin tag", async () => {
+  const seen = [];
+  const firstPage = Array.from({ length: 50 }, (_, index) => ({ id: `tag-${index}`, title: `tag-${index}` }));
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board",
+    fetchImpl: async (url, init = {}) => {
+      seen.push({ url, init });
+      if (url.includes("offset=50")) {
+        return new Response(JSON.stringify({ data: [{ id: "tag-origin", title: "live-ideas-origin" }] }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ data: firstPage }), { status: 200, headers: { "content-type": "application/json" } });
+    },
+  });
+
+  const result = await client.ensureOriginTag();
+
+  assert.deepEqual(result, { ok: true, tagId: "tag-origin" });
+  assert.equal(seen.length, 2);
+  assert.match(seen[0].url, /offset=0$/);
+  assert.match(seen[1].url, /offset=50$/);
+});
+
+test("Miro client fails explicitly when origin tag title is ambiguous", async () => {
+  let calls = 0;
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board",
+    fetchImpl: async () => {
+      calls += 1;
+      return new Response(JSON.stringify({
+        data: [
+          { id: "tag-a", title: "live-ideas-origin" },
+          { id: "tag-b", title: "live-ideas-origin" },
+        ],
+      }), { status: 200, headers: { "content-type": "application/json" } });
+    },
+  });
+
+  const result = await client.ensureOriginTag();
+
+  assert.deepEqual(result, { ok: false, error: "ambiguous_origin_tag" });
+  assert.equal(calls, 1);
+});
+
+test("Miro client attaches origin tag to an existing item", async () => {
+  const seen = [];
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board/a b",
+    fetchImpl: async (url, init = {}) => {
+      seen.push({ url, init });
+      return new Response(null, { status: 204 });
+    },
+  });
+
+  const result = await client.attachOriginTag({ itemId: "item/1", tagId: "tag/1" });
+
+  assert.deepEqual(result, { ok: true });
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].url, "https://api.miro.com/v2/boards/board%2Fa%20b/items/item%2F1?tag_id=tag%2F1");
+  assert.equal(seen[0].init.method, "POST");
+});
+
+test("Miro client verifies repair target through sticky-note endpoint", async () => {
+  const seen = [];
+  const client = createMiroClient({
+    accessToken: "secret-token",
+    boardId: "board",
+    fetchImpl: async (url, init = {}) => {
+      seen.push({ url, init });
+      return new Response(JSON.stringify({ id: "item-1", type: "sticky_note", data: { content: "x" } }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    },
+  });
+
+  const result = await client.verifyRepairTarget("item-1");
+
+  assert.deepEqual(result, { ok: true });
+  assert.equal(seen[0].url, "https://api.miro.com/v2/boards/board/sticky_notes/item-1");
+  assert.equal(seen[0].init.method, "GET");
+});
