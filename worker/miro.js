@@ -2,6 +2,7 @@ import { getStickyPosition } from "../src/domain/positioning.js";
 
 const DEFAULT_STICKY_WIDTH = 199;
 const DEFAULT_STICKY_HEIGHT = 228;
+const ORIGIN_TAG_TITLE = "live-ideas-origin";
 
 export function escapeMiroContent(text) {
   return text
@@ -82,6 +83,61 @@ export function createMiroClient({ fetchImpl = fetch, accessToken, boardId }) {
     return { ok: true, items };
   }
 
+  async function listBoardTags() {
+    const tags = [];
+    let offset = 0;
+
+    for (;;) {
+      const response = await fetchImpl(
+        `https://api.miro.com/v2/boards/${encodedBoardId}/tags?limit=50&offset=${offset}`,
+        {
+          method: "GET",
+          headers: authorizationHeaders,
+        },
+      );
+
+      if (response.status !== 200) {
+        return { ok: false, statusCode: response.status, error: "origin_tag_lookup_failed" };
+      }
+
+      const data = await response.json().catch(() => null);
+      if (!Array.isArray(data?.data)) {
+        return { ok: false, error: "origin_tag_lookup_failed" };
+      }
+
+      tags.push(...data.data);
+      if (data.data.length < 50) break;
+      offset += data.data.length;
+    }
+
+    return { ok: true, tags };
+  }
+
+  async function createOriginTag() {
+    const response = await fetchImpl(
+      `https://api.miro.com/v2/boards/${encodedBoardId}/tags`,
+      {
+        method: "POST",
+        headers: {
+          ...authorizationHeaders,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ title: ORIGIN_TAG_TITLE }),
+      },
+    );
+
+    if (response.status !== 201) {
+      return { ok: false, statusCode: response.status, error: "origin_tag_create_failed" };
+    }
+
+    const data = await response.json().catch(() => null);
+    if (typeof data?.id !== "string" || data.id.length === 0) {
+      return { ok: false, error: "origin_tag_create_failed" };
+    }
+
+    return { ok: true, tagId: data.id };
+  }
+
   async function getItem(itemId) {
     if (itemCache.has(itemId)) return { ok: true, item: itemCache.get(itemId) };
 
@@ -160,6 +216,67 @@ export function createMiroClient({ fetchImpl = fetch, accessToken, boardId }) {
   }
 
   return {
+    async ensureOriginTag() {
+      try {
+        const listed = await listBoardTags();
+        if (!listed.ok) return listed;
+
+        const matching = listed.tags.filter((tag) => tag?.title === ORIGIN_TAG_TITLE);
+        if (matching.length > 1) {
+          return { ok: false, error: "ambiguous_origin_tag" };
+        }
+        if (matching.length === 1) {
+          const tagId = matching[0]?.id;
+          if (typeof tagId === "string" && tagId.length > 0) {
+            return { ok: true, tagId };
+          }
+          return { ok: false, error: "origin_tag_lookup_failed" };
+        }
+
+        return await createOriginTag();
+      } catch {
+        return { ok: false, error: "origin_tag_request_failed" };
+      }
+    },
+
+    async attachOriginTag({ itemId, tagId }) {
+      try {
+        const response = await fetchImpl(
+          `https://api.miro.com/v2/boards/${encodedBoardId}/items/${encodeURIComponent(itemId)}?tag_id=${encodeURIComponent(tagId)}`,
+          {
+            method: "POST",
+            headers: authorizationHeaders,
+          },
+        );
+        if (response.status === 204) return { ok: true };
+        return { ok: false, statusCode: response.status, error: "origin_tag_failed" };
+      } catch {
+        return { ok: false, error: "origin_tag_failed" };
+      }
+    },
+
+    async verifyRepairTarget(itemId) {
+      try {
+        const response = await fetchImpl(
+          `https://api.miro.com/v2/boards/${encodedBoardId}/sticky_notes/${encodeURIComponent(itemId)}`,
+          {
+            method: "GET",
+            headers: authorizationHeaders,
+          },
+        );
+        if (response.status !== 200) {
+          return { ok: false, statusCode: response.status, error: "invalid_repair_target" };
+        }
+        const item = await response.json().catch(() => null);
+        if (!item || typeof item !== "object" || item.id !== itemId) {
+          return { ok: false, error: "invalid_repair_target" };
+        }
+        return { ok: true };
+      } catch {
+        return { ok: false, error: "invalid_repair_target" };
+      }
+    },
+
     async createSticky({ text }) {
       try {
         const listed = await listStickyItems();
