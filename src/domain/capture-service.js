@@ -36,13 +36,21 @@ export function createCaptureService({ store, remote, now }) {
 
       let remoteResult;
       try {
-        remoteResult = await remote.createSticky({ text: sending.text, position });
+        remoteResult = await remote.createSticky({
+          text: sending.text,
+          position,
+          miroItemId: sending.miroItemId ?? null,
+        });
       } catch {
         remoteResult = { ok: false, error: "network_error" };
       }
 
       if (!remoteResult?.ok) {
-        const failed = markFailed(sending);
+        const failed = markFailed(sending, {
+          miroItemId: typeof remoteResult?.itemId === "string" && remoteResult.itemId.length > 0
+            ? remoteResult.itemId
+            : sending.miroItemId ?? null,
+        });
         try {
           store.replace(failed);
         } catch {
@@ -51,7 +59,7 @@ export function createCaptureService({ store, remote, now }) {
         return failure(failed, remoteResult?.error || "miro_create_failed");
       }
 
-      const sent = markSent(sending, now());
+      const sent = markSent(sending, now(), remoteResult.itemId ?? sending.miroItemId ?? null);
       try {
         store.replace(sent);
       } catch {
