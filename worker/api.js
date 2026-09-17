@@ -55,6 +55,16 @@ function validPosition(position) {
   return position && Number.isFinite(position.x) && Number.isFinite(position.y);
 }
 
+function statusFor(result, fallback = 502) {
+  if (result?.statusCode === 429) return 429;
+  if (result?.error === "invalid_repair_target") return 409;
+  return fallback;
+}
+
+function failureBody(result, fallbackError) {
+  return { ok: false, error: result?.error || fallbackError };
+}
+
 export async function handleCreateFragment(request, env, deps = {}) {
   if (!runtimeConfigured(env)) {
     return json({ ok: false, error: "runtime_not_configured" }, 503);
@@ -79,7 +89,14 @@ export async function handleCreateFragment(request, env, deps = {}) {
     return json({ ok: false, error: "invalid_fragment" }, 400);
   }
 
-  if (typeof body?.text !== "string" || body.text.length === 0 || !validPosition(body.position)) {
+  const validRepairId = body?.miroItemId == null
+    || (typeof body.miroItemId === "string" && body.miroItemId.length > 0);
+  if (
+    typeof body?.text !== "string"
+    || body.text.length === 0
+    || !validPosition(body.position)
+    || !validRepairId
+  ) {
     return json({ ok: false, error: "invalid_fragment" }, 400);
   }
 
@@ -89,12 +106,42 @@ export async function handleCreateFragment(request, env, deps = {}) {
     accessToken: env.MIRO_ACCESS_TOKEN,
     boardId: env.MIRO_BOARD_ID,
   });
-  const result = await client.createSticky({ text: body.text, position: body.position });
 
-  if (result?.ok && typeof result.itemId === "string" && result.itemId.length > 0) {
-    return json({ ok: true, itemId: result.itemId }, 201);
+  const tagResult = await client.ensureOriginTag();
+  if (!tagResult?.ok || typeof tagResult.tagId !== "string" || tagResult.tagId.length === 0) {
+    return json(
+      failureBody(tagResult, "miro_tag_resolution_failed"),
+      statusFor(tagResult),
+    );
   }
 
-  const status = result?.statusCode === 429 ? 429 : 502;
-  return json({ ok: false, error: result?.error || "miro_create_failed" }, status);
+  let itemId = body.miroItemId ?? null;
+  if (itemId) {
+    const verifyResult = await client.verifyRepairTarget(itemId);
+    if (!verifyResult?.ok) {
+      return json(
+        failureBody(verifyResult, "invalid_repair_target"),
+        statusFor(verifyResult),
+      );
+    }
+  } else {
+    const createResult = await client.createSticky({ text: body.text, position: body.position });
+    if (!createResult?.ok || typeof createResult.itemId !== "string" || createResult.itemId.length === 0) {
+      return json(
+        failureBody(createResult, "miro_create_failed"),
+        statusFor(createResult),
+      );
+    }
+    itemId = createResult.itemId;
+  }
+
+  const attachResult = await client.attachOriginTag({ itemId, tagId: tagResult.tagId });
+  if (!attachResult?.ok) {
+    return json(
+      { ok: false, error: "origin_tag_failed", itemId },
+      statusFor(attachResult),
+    );
+  }
+
+  return json({ ok: true, itemId }, 201);
 }
