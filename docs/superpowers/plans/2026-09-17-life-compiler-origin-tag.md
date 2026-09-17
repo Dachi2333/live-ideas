@@ -10,6 +10,10 @@
 
 **Spec:** Cross-repository design in `Dachi2333/Life-Compiler/docs/superpowers/specs/2026-09-17-live-ideas-origin-sync-design.md`
 
+## Status
+
+Executed on branch `feat/life-compiler-origin-tag`; PR #6 is fully green as of 2026-09-17. Full CI includes tests, build, artifact verification, and secret scans. Cross-repository fixture: `tests/fixtures/life-compiler-origin-contract.json`.
+
 ## Global Constraints
 
 - Reserved tag title is exactly `live-ideas-origin`.
@@ -23,222 +27,18 @@
 
 ---
 
-### Task 1: Extend Fragment provenance state
-
-**Files:**
-- Modify: `src/domain/fragment.js`
-- Modify: `tests/domain/fragment.test.js`
-
-**Interfaces:**
-- `createFragment({ id, text, createdAt })` returns `miroItemId: null`.
-- `markFailed(fragment, { miroItemId = fragment.miroItemId ?? null } = {})` preserves provenance.
-- `markSent(fragment, sentAt, miroItemId)` sets status `sent`, `sentAt`, and `miroItemId`.
-
-- [ ] **Step 1: Write failing tests**
-
-Prove a fresh fragment starts with `miroItemId: null`, a failed fragment can retain `"item-123"`, and a sent fragment retains the same item ID.
-
-- [ ] **Step 2: Run RED**
-
-```bash
-node --test tests/domain/fragment.test.js
-```
-
-Expected: assertions fail because current fragment shape has no Miro provenance.
-
-- [ ] **Step 3: Implement minimal state changes**
-
-Keep all existing fields/semantics unchanged except the optional provenance field.
-
-- [ ] **Step 4: Run GREEN**
-
-Run the same targeted test.
-
----
-
-### Task 2: Add origin-tag operations to Miro client
-
-**Files:**
-- Modify: `worker/miro.js`
-- Modify: `tests/worker/miro.test.js`
-
-**Interfaces:**
-- `ensureOriginTag() -> { ok: true, tagId } | { ok: false, statusCode?, error }`.
-- `attachOriginTag({ itemId, tagId }) -> { ok: true } | { ok: false, statusCode?, error }`.
-- `verifyRepairTarget(itemId) -> { ok: true } | { ok: false, statusCode?, error }`.
-- Existing `createSticky({ text }) -> { ok: true, itemId } | failure` remains.
-
-- [ ] **Step 1: Write failing Miro API tests**
-
-Using fake fetch responses, cover:
-
-1. list `GET /v2/boards/{board}/tags?limit=50&offset=0`, reuse exactly one matching tag;
-2. create `POST /v2/boards/{board}/tags` when no match exists, body title `live-ideas-origin`;
-3. paginate board tags with offset until a page has fewer than 50 entries;
-4. duplicate matching titles -> `ambiguous_origin_tag` without creating another tag;
-5. attach tag via `POST /v2/boards/{board}/items/{item}?tag_id={tag}` and require 204;
-6. repair verification reads `GET /v2/boards/{board}/sticky_notes/{item}` and succeeds only for a real Sticky response.
-
-- [ ] **Step 2: Run RED**
-
-```bash
-node --test tests/worker/miro.test.js
-```
-
-Expected: new methods are missing.
-
-- [ ] **Step 3: Implement the Miro calls**
-
-Use current authorization headers. Exact REST operations:
-
-```text
-GET  /v2/boards/{board_id}/tags?limit=50&offset=N
-POST /v2/boards/{board_id}/tags
-POST /v2/boards/{board_id}/items/{item_id}?tag_id={tag_id}
-GET  /v2/boards/{board_id}/sticky_notes/{item_id}
-```
-
-Create tag payload:
-
-```json
-{"title":"live-ideas-origin"}
-```
-
-Treat 429 distinctly; otherwise return sanitized errors.
-
-- [ ] **Step 4: Run GREEN**
-
-Run targeted Miro tests, then existing Miro tests together.
-
----
-
-### Task 3: Worker create-or-repair flow
-
-**Files:**
-- Modify: `worker/api.js`
-- Modify: `tests/worker/api.test.js`
-
-**Interfaces:**
-- Request body accepts optional `miroItemId: string`.
-- New send path without `miroItemId`: ensure tag -> create Sticky -> attach tag.
-- Repair path with `miroItemId`: ensure tag -> verify target -> attach tag only.
-- Full success response: `{ ok: true, itemId }`.
-- Recoverable attach failure response: `{ ok: false, error: "origin_tag_failed", itemId }`.
-
-- [ ] **Step 1: Write failing API tests**
-
-Cover:
-
-1. normal send calls ensure tag, create Sticky, attach tag, returns 201 + itemId;
-2. attach failure after creation returns non-201 recoverable payload with same itemId;
-3. repair request with `miroItemId` calls verify + attach and never calls createSticky;
-4. ambiguous tag failure returns sanitized error and no Sticky creation;
-5. invalid repair target fails and no new Sticky is created.
-
-- [ ] **Step 2: Run RED**
-
-```bash
-node --test tests/worker/api.test.js
-```
-
-- [ ] **Step 3: Implement orchestration**
-
-Keep auth/body-size/runtime checks intact. Permit body shape:
-
-```js
-{ text, position, miroItemId? }
-```
-
-`text` and `position` remain required so repair cannot retarget arbitrary content silently.
-
-- [ ] **Step 4: Run GREEN**
-
-Run worker API tests and then all worker tests.
-
----
-
-### Task 4: Browser remote and Capture-service recovery
-
-**Files:**
-- Modify: `src/client/remote.js`
-- Modify: `src/domain/capture-service.js`
-- Modify: `tests/domain/capture-service.test.js`
-- Add or modify the relevant client remote test under `tests/client/`.
-
-**Interfaces:**
-- `remote.createSticky({ text, position, miroItemId = null })` sends optional repair ID.
-- Remote failure may return `{ ok: false, error, itemId }`.
-- Capture service persists partial `itemId` on failed fragment.
-- Retry passes existing `fragment.miroItemId` back to remote.
-
-- [ ] **Step 1: Write failing tests**
-
-Capture-service tests must prove:
-
-```text
-first call: remote returns {ok:false,error:"origin_tag_failed",itemId:"item-123"}
-→ stored fragment status=failed, miroItemId="item-123", clearInput=false
-retry
-→ remote called with miroItemId="item-123"
-→ success returns same item ID, fragment becomes sent
-```
-
-Also prove already-sent behavior remains idempotent.
-
-Remote client test must prove failure payload itemId is preserved when server returns it.
-
-- [ ] **Step 2: Run RED**
-
-Run targeted domain/client tests and confirm missing provenance propagation.
-
-- [ ] **Step 3: Implement minimal propagation**
-
-Do not add UI fields. The existing retry button/state is reused.
-
-- [ ] **Step 4: Run GREEN**
-
-Run targeted tests, then `npm test`.
-
----
-
-### Task 5: Cross-repository contract and final verification
-
-**Files:**
-- Create: `tests/fixtures/life-compiler-origin-contract.json`
-- Modify: relevant domain/worker test to consume fixture if practical.
-
-**Interfaces:**
-- Synthetic fixture contains one stable `miroItemId`, text, and timestamps; no credentials.
-
-- [ ] **Step 1: Add fixture**
-
-```json
-{
-  "fragmentId": "fragment-contract-1",
-  "miroItemId": "3458764512345",
-  "text": "A synthetic Live Ideas fragment",
-  "createdAt": "2026-09-17T10:04:30Z",
-  "sentAt": "2026-09-17T10:05:00Z"
-}
-```
-
-- [ ] **Step 2: Assert receipt identity**
-
-Test that successful/repair flow stores exactly the fixture's `miroItemId` in the sent Fragment.
-
-- [ ] **Step 3: Run full verification**
-
-```bash
-npm test
-npm run build
-```
-
-Both must pass.
-
-- [ ] **Step 4: Diff audit**
-
-Compare feature branch against `main`; only origin-tag/provenance/recovery code, tests, fixture, and plan may change.
-
-- [ ] **Step 5: Open PR and link issue #5 / DAC-143**
-
-Do not close DAC-143 until Life Compiler's companion adapter PR is also green and both fixtures agree on the same Miro item identity.
+### Completed deliverables
+
+- [x] Fragment state includes `miroItemId` provenance.
+- [x] Miro client resolves/creates unique `live-ideas-origin` tag.
+- [x] Duplicate same-title origin tags fail explicitly.
+- [x] Miro client attaches tag to an existing item.
+- [x] Repair target verification uses Sticky endpoint.
+- [x] Worker create path is ensure tag → create Sticky → attach tag.
+- [x] Worker repair path is ensure tag → verify target → attach only; no new Sticky.
+- [x] Partial tag failure returns recoverable `itemId`.
+- [x] Browser remote propagates optional repair ID and preserves failure item ID.
+- [x] Capture service persists partial provenance and retries with the same item ID.
+- [x] Synthetic cross-repository fixture added and consumed by a receipt test.
+- [x] Full `npm test`, build, artifact checks, and secret scans pass in PR CI.
+- [x] Diff audit confirms only origin-tag/provenance/recovery files changed.
