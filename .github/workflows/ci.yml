@@ -5,10 +5,13 @@ on:
   push:
     branches:
       - main
-      - feat/webapp-v0
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-and-build:
@@ -16,7 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -41,6 +44,14 @@ jobs:
             echo 'Potential committed credential found.'
             exit 1
           fi
+
+  history-secret-scan:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Check full Git history for populated secrets
         run: |
           hits="$(git log -p --all --no-color -- . ':!.github/workflows/ci.yml' ':!docs/superpowers/**' | \
